@@ -234,6 +234,3 @@ with open(filepath + current_save, 'w') as file:
         for x in list(interval()):
             file.write(str(x) + ',' + str(type(x)) + '\n')
             #print(type(x))
-#this is a comment
-#this is a test
-#this is anothr test
