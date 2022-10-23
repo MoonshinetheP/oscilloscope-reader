@@ -57,36 +57,40 @@ def interval():
         peak_position.append(int(peak) + a + 1)
         a += interval_memory
     
-    print(peak_position)
+    
     
     
     real_intervals = np.diff(np.array(peak_position))
     
-
-
+    
     for z in real_intervals:  
-        if z < ((peakfinding_factor*sum(real_intervals))/(real_intervals.size)):
+        
+        if z < (peakfinding_factor*np.sum(real_intervals))/(np.size(real_intervals)):
+            
             index_of_mistake = np.where(real_intervals == z)
-            np.delete(real_intervals, index_of_mistake)
+            print((index_of_mistake[0][0]))
+            real_intervals = np.delete(real_intervals, index_of_mistake[0][0])
         else:
             pass
 
-    return (real_intervals)
-    minimum_interval = np.amin(temp_intervals)   # test this to see what minimum interval actually is
-    list_of_intervals = np.array([])
+    
+    minimum_interval = np.amin(real_intervals)   # test this to see what minimum interval actually is
+    #works up to here
+    list_of_intervals = []
     b = 0
     
     while b < (absolute.size - minimum_interval + 1):
         recalculated_window = absolute[b : b + minimum_interval]
-        peak_recount = np.max(recalculated_window)
-        position_recount = np.where(recalculated_window == peak_recount)
-        np.append(list_of_intervals, position_recount + b + 1)
+        peak_recount = np.argmax(recalculated_window)
+        list_of_intervals.append(int(peak_recount)+ b + 1)
         b += minimum_interval
+
+    #list_of_intervals_diff = np.diff(np.array(list_of_intervals))
 
     for w in list_of_intervals:
         if w <(0.5*minimum_interval):
             index_of_second_mistake = np.where(list_of_intervals == w)
-            np.delete(list_of_intervals, index_of_second_mistake)
+            list_of_intervals = np.delete(list_of_intervals, index_of_second_mistake[0][0])
     diff_of_intervals = np.diff(list_of_intervals)
     return (minimum_interval,list_of_intervals,diff_of_intervals)                 # to test, can I do a third run to improve peak differentials
 
