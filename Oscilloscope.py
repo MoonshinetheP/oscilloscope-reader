@@ -4,10 +4,8 @@ import numpy as np
 
 
 '''USER FILES'''
-filepath = 'C:/Users/SLinf/Documents/Research/Data/2022/2022-05-11/'
+filepath = 'C:/Users/SLinf/Documents/GitHub/oscilloscope-reader/'
 current = filepath + 'Newfile15.csv'
-potential = filepath + 'Newfile15_CH2.csv'
-
 
 '''USER DEFINED PARAMETERS'''
 upper = 1.3                                             # Upper vertex potential of the voltammogram (user-defined)
