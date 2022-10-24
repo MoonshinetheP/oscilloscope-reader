@@ -42,6 +42,7 @@ with open(current, "r") as y:                           # Opens the current data
 
 array_of_currents = np.array(list_of_currents)
 #b = a.tolist()
+
 '''FUNCTIONS'''
 def interval():
     '''This function finds the position of each transient and the real interval time between each step'''
@@ -51,6 +52,7 @@ def interval():
     
     peak_position = []
     a = 0
+    
     while a < (absolute.size - interval_memory + 1):
         moving_window = absolute[a : a + interval_memory]
         peak = np.argmax(moving_window)
@@ -58,23 +60,19 @@ def interval():
         a += interval_memory
     
     
+    intervals = np.diff(np.array(peak_position))
     
     
-    real_intervals = np.diff(np.array(peak_position))
-    
-    
-    for z in real_intervals:  
+    for z in intervals:  
         
-        if z < (peakfinding_factor*np.sum(real_intervals))/(np.size(real_intervals)):
-            
-            index_of_mistake = np.where(real_intervals == z)
-            print((index_of_mistake[0][0]))
-            real_intervals = np.delete(real_intervals, index_of_mistake[0][0])
+        if z < (peakfinding_factor*np.sum(intervals))/(np.size(intervals)):
+            index_of_mistake = np.where(intervals == z)
+            intervals = np.delete(intervals, index_of_mistake[0][0])
         else:
             pass
 
     
-    minimum_interval = np.amin(real_intervals)   # test this to see what minimum interval actually is
+    minimum_interval = np.amin(intervals)   # test this to see what minimum interval actually is
     #works up to here
     list_of_intervals = []
     b = 0
@@ -84,14 +82,16 @@ def interval():
         peak_recount = np.argmax(recalculated_window)
         list_of_intervals.append(int(peak_recount)+ b + 1)
         b += minimum_interval
-
-    #list_of_intervals_diff = np.diff(np.array(list_of_intervals))
-
-    for w in list_of_intervals:
-        if w <(0.5*minimum_interval):
-            index_of_second_mistake = np.where(list_of_intervals == w)
+    
+    diff_of_intervals = np.diff(np.array(list_of_intervals))
+    for w in diff_of_intervals:
+        if w <(peakfinding_factor * minimum_interval):
+            index_of_second_mistake = np.where(diff_of_intervals == w)
             list_of_intervals = np.delete(list_of_intervals, index_of_second_mistake[0][0])
-    diff_of_intervals = np.diff(list_of_intervals)
+            diff_of_intervals = np.delete(diff_of_intervals, index_of_second_mistake[0][0])
+        else:
+            pass
+        
     return (minimum_interval,list_of_intervals,diff_of_intervals)                 # to test, can I do a third run to improve peak differentials
 
    
@@ -235,6 +235,6 @@ def publish_intervals():
 
 current_save = 'current.txt'
 with open(filepath + current_save, 'w') as file:
-        for x in list(interval()):
+        for x in list(interval()[2]):
             file.write(str(x) + ',' + str(type(x)) + '\n')
             #print(type(x))
