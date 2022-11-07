@@ -1,5 +1,5 @@
 '''MODULES'''
-import csv
+import pandas as pd
 import numpy as np
 
 
@@ -30,18 +30,10 @@ total_dp = int(experiment_time * sample_rate)
 
 
 '''DATA OPENER'''
-list_of_currents = []                                   # List of current data that will be used for plotting and calculation
+df = pd.read_csv(current, header = 1, low_memory = False)
+#ndf = df.dropna()
+array_of_currents = df.to_numpy().astype(float)[:,1]
 
-with open(current, "r") as y:                           # Opens the current data CSV file from the oscilloscope
-    for row in csv.reader(y):                                   # Reads through each row of the current data CSV file
-        try:                                        # Try statement allows headers to be ignored
-            data = -1 * float(row[1])               
-            list_of_currents.append(data) 
-        except:
-            pass
-
-array_of_currents = np.array(list_of_currents)
-#b = a.tolist()
 
 '''FUNCTIONS'''
 def interval():
