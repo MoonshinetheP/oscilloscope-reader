@@ -1,5 +1,9 @@
 import pandas as pd
 import numpy as np
+import fileopener as fo
+import simulations as sim
+import operations as op
+import plotting as plt
 
 
 '''USER FILES'''
@@ -21,7 +25,12 @@ graduations = step / interval_memory
 experiment_time = 2 * (upper - lower) / scan
 total_dp = int(experiment_time * sample_rate)
 
-current_save = 'current.txt'
-with open(filepath + current_save, 'w') as file:
-        for x in list(interval()[2]):
-            file.write(str(x) + ',' + str(type(x)) + '\n')
+
+
+if __name__ == '__main__':
+    data = fo.Oscilloscope(current)
+
+    current_save = 'current.txt'
+    with open(filepath + current_save, 'w') as file:
+        for x in data.array:
+            file.write(str(x) + '\n')

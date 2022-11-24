@@ -11,3 +11,5 @@ def plot(input):
         pdf.savefig()
         plt.close()
 
+if __name__ == '__main__':
+    pass

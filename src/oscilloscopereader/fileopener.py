@@ -1,4 +1,5 @@
 import pandas as pd
+import errno
 
 class Oscilloscope:
     '''A class which opens an oscilloscope .csv file and converts it into a usable numpy array'''
