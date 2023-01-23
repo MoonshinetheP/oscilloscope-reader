@@ -44,8 +44,26 @@ class Capacitance:
 
 
         if self.Eini > self.Elow and self.Eini < Eupp:
-            pass
+            self.segments = 3 * self.ns          # Number of segments expected          
+            self.uppwindow = self.Eupp - self.Eini         # Potential window of each segment
+            self.window = self.Eupp - self.Elow
+            self.lowwindow = self.Eini - self.Elow
+            self.uppdp = int(self.uppwindow/self.dE)
+            self.dp = int(self.window/self.dE)       # Number of data points in each potential window
+            self.lowdp = int(self.lowwindow/self.dE)
 
+            self.time = np.array([])
+            for ix in range(0, self.ns):
+                self.time = np.append(self.time, np.round(np.linspace(0, (self.window - self.dE)/self.sr, self.dp), decimals = 3))
+                self.time = np.append(self.time, np.round(np.linspace(0, (self.window - self.dE)/self.sr, self.dp), decimals = 3))
+                self.time = np.append(self.time, np.round(np.linspace(0, (self.window - self.dE)/self.sr, self.dp), decimals = 3))
+
+            self.sweep = np.array([])
+            for iy in range(0, self.ns):
+                self.sweep = np.append(self.sweep, np.round(np.linspace(self.Eini, self.Eupp - self.dE, self.uppdp), decimals = 4))
+                self.sweep = np.append(self.sweep, np.round(np.linspace(self.Eupp, self.Elow + self.dE, self.dp), decimals = 4))
+                self.sweep = np.append(self.sweep, np.round(np.linspace(self.Elow, self.Eini - self.dE, self.lowdp), decimals = 4))
+            
 
         '''Errors'''
         if self.Eini < self.Elow:
@@ -61,7 +79,10 @@ class Capacitance:
             print('\n' + 'Step potential must be negative for a negative scan direction' + '\n')
             sys.exit()
 
-            
+    def temp(self):
+        return self.sweep 
+
+
     def CV(self):
         '''Returns E vs. i for a CV performed on a capacitor with parameters derived from the Capacitance() class\n
         Uses equation 1.6.23 from the 3rd edition of Electrochemical Methods:\n
@@ -110,14 +131,14 @@ class Capacitance:
 
 
 if __name__ == '__main__':
-    example = Capacitance()
-    linear = example.CV()
-    staircase = example.CSV()
-    test = 'C:/Users/SLinf/Documents/GitHub/oscilloscope-reader/CV.txt'
+    example = Capacitance(Eini=-0.2,Eupp=0.6,Elow=-1.4, dE= 0.01834862385, sr=0.1, ns=1)
+    #linear = example.CV()
+    #staircase = example.CSV()
+    test = 'C:/Users/SLinf/Documents/CV.txt'
     with open(test, 'w') as file:
-        for ix,iy in linear:
-            file.write(str(ix) + ',' + str(iy) + '\n')
-    test2 = 'C:/Users/SLinf/Documents/GitHub/oscilloscope-reader/CSV.txt'
-    with open(test2, 'w') as file:
-        for ix,iy in staircase:
-            file.write(str(ix) + ',' + str(iy) + '\n')
+        for ix in example.temp():
+            file.write(str(ix) + '\n')
+    #test2 = 'C:/Users/SLinf/Documents/GitHub/oscilloscope-reader/CSV.txt'
+    #with open(test2, 'w') as file:
+        #for ix,iy in staircase:
+            #file.write(str(ix) + ',' + str(iy) + '\n')
