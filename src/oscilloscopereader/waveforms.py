@@ -374,11 +374,21 @@ class CSV(hybrid):
 
     
         '''EXPORTED WAVEFORM'''
-        self.indexWF = np.arange(0, self.sp * round((self.tmax + self.dt) / self.dt, 9), 1, dtype = np.int32)
-        self.tWF = (self.indexWF * self.dt) / self.sp        
-        self.EWF = np.array([])
-        for ix in range(0, self.E.size):
-            self.EWF = np.append(self.EWF, np.ones((self.sp)) * self.E[ix])
+        if self.detailed == False:
+            self.indexWF = np.arange(0, 2 * round((self.tmax + self.dt) / self.dt, 9), 1, dtype = np.int32)
+            self.tWF = np.array(0)
+            for ix in range(1, round(self.indexWF.size / 2)):
+                self.tWF = np.append(self.tWF, np.ones(2) * self.indexWF[ix] * (self.dt))
+            self.twF = np.append(self.tWF, self.tWF[-1] + self.dt)
+            self.EWF = np.array([])
+            for ix in self.E:
+                self.EWF = np.append(self.EWF, np.ones((2)) * ix)
+
+        if self.detailed == True:
+            self.indexWF = np.arange(0, self.sp * round((self.tmax + self.dt) / self.dt, 9), 1, dtype = np.int32)
+            self.tWF = (self.indexWF * self.dt) / self.sp
+            for ix in self.E:
+                self.EWF = np.append(self.EWF, np.ones((self.sp)) * ix)
         pass
 
 
