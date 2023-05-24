@@ -387,9 +387,9 @@ class CSV(hybrid):
         if self.detailed == True:
             self.indexWF = np.arange(0, self.sp * round((self.tmax + self.dt) / self.dt, 9), 1, dtype = np.int32)
             self.tWF = (self.indexWF * self.dt) / self.sp
+            self.EWF = np.array([])
             for ix in self.E:
                 self.EWF = np.append(self.EWF, np.ones((self.sp)) * ix)
-        pass
 
 
 
