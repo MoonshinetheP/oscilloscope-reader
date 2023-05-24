@@ -33,8 +33,8 @@ if __name__ == '__main__':
     '''SIMULATION'''
     start = time.time()
 
-    shape = wf.CV(Eini = 0, Eupp = 0.5, Elow = 0, dE = 0.005, sr = 0.1, ns = 1)
-    #shape = wf.CSV(Eini = 0, Eupp = 0.5, Elow = 0, dE = 0.005, sr = 0.2, ns = 2, st = 0.001, detailed = False)
+    #shape = wf.CV(Eini = 0.25, Eupp = 0.5, Elow = 0, dE = -0.005, sr = 0.1, ns = 1)
+    shape = wf.CSV(Eini = 0, Eupp = 0.5, Elow = 0, dE = 0.005, sr = 0.2, ns = 2, st = 0.001, detailed = False)
 
     instance = sim.Capacitance(input = shape, Cd =0.0001, Ru = 1000)
     
@@ -45,7 +45,7 @@ if __name__ == '__main__':
     '''PLOT GENERATION'''
     fig, (ax1, ax2) = plt.subplots(1,2, figsize=(12, 5))
     left, = ax1.plot(shape.tWF, shape.EWF, linewidth = 1, linestyle = '-', color = 'blue', marker = None, label = None, visible = True)
-    right, = ax2.plot(shape.EPLOT, instance.i, linewidth = 1, linestyle = '-', color = 'red', marker = None, label = None, visible = True)
+    right, = ax2.plot(shape.EPLOT[1:], instance.i, linewidth = 1, linestyle = '-', color = 'red', marker = None, label = None, visible = True)
 
 
     '''PLOT SETTINGS'''
