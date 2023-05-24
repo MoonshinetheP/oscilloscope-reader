@@ -86,19 +86,19 @@ class Capacitance:
         
         if self.Eini == self.Elow:
             self.i = np.array([])
-            self.iplus = np.zeros(self.ns * self.input.sp * self.input.dp)
-            self.iminus = np.zeros(self.ns * self.input.sp * self.input.dp)
+            self.iplus = np.zeros(self.input.sp * self.input.dp)
+            self.iminus = np.zeros(self.input.sp * self.input.dp)
             for ix in range(0, self.ns):
                 for iy in range(0, self.input.dp):
-                    space = int(ix * self.input.dp * self.input.sp + iy * self.input.sp)
+                    space = int(iy * self.input.sp)
                     self.iplus[space:] = np.add(self.iplus[space:], (self.dE/self.Ru) * np.exp((-self.input.tWF[:self.input.sp * self.input.dp - space]) / (self.Ru * self.Cd)))
                 for iy in range(0, self.input.dp):
-                    space = int(ix * self.input.dp * self.input.sp + iy * self.input.sp)
+                    space = int(iy * self.input.sp)
                     self.iminus[space:] = np.add(self.iminus[space:], (-self.dE/self.Ru) * np.exp((-self.input.tWF[:self.input.sp * self.input.dp - space]) / (self.Ru * self.Cd)))
                 self.i = np.append(self.i, self.iplus)
                 self.i = np.append(self.i, self.iminus)
-                self.iplus = np.zeros(self.ns * self.input.sp * self.input.dp)
-                self.iminus = np.zeros(self.ns * self.input.sp * self.input.dp)
+                self.iplus = np.zeros(self.input.sp * self.input.dp)
+                self.iminus = np.zeros(self.input.sp * self.input.dp)
         pass
     
     def results(self):
