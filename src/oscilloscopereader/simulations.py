@@ -39,8 +39,38 @@ class Capacitance:
             for iy in range(0, self.ns):
                 self.i = np.append(self.i, self.sr * self.Cd * (1 - np.exp((-self.input.t[:self.input.dp]) / (self.Ru * self.Cd))))
                 self.i = np.append(self.i, -self.sr * self.Cd * (1 - np.exp((-self.input.t[:self.input.dp]) / (self.Ru * self.Cd))))
-       
         
+        if self.Eini == self.Eupp:
+            self.i = np.array([])
+            for iy in range(0, self.ns):
+                self.i = np.append(self.i, -self.sr * self.Cd * (1 - np.exp((-self.input.t[:self.input.dp]) / (self.Ru * self.Cd))))
+                self.i = np.append(self.i, self.sr * self.Cd * (1 - np.exp((-self.input.t[:self.input.dp]) / (self.Ru * self.Cd))))
+        
+        if self.Elow < self.Eini < self.Eupp:  
+            self.i = np.array([])
+            if self.dE > 0:
+                for iy in range(0, self.ns):
+                    if iy == 0:
+                        self.i = np.append(self.i, self.sr * self.Cd * (1 - np.exp((-self.input.t[:self.input.uppdp]) / (self.Ru * self.Cd))))
+                        self.i = np.append(self.i, -self.sr * self.Cd * (1 - np.exp((-self.input.t[:self.input.dp]) / (self.Ru * self.Cd))))
+                    elif iy < self.ns:
+                        self.i = np.append(self.i, self.sr * self.Cd * (1 - np.exp((-self.input.t[:self.input.dp]) / (self.Ru * self.Cd))))
+                        self.i = np.append(self.i, -self.sr * self.Cd * (1 - np.exp((-self.input.t[:self.input.dp]) / (self.Ru * self.Cd))))
+                
+                self.i = np.append(self.i, self.sr * self.Cd * (1 - np.exp((-self.input.t[:self.input.lowdp]) / (self.Ru * self.Cd))))
+
+            if self.dE < 0:
+                for iy in range(0, self.ns):
+                    if iy == 0:
+                        self.i = np.append(self.i, -self.sr * self.Cd * (1 - np.exp((-self.input.t[:self.input.lowdp]) / (self.Ru * self.Cd))))
+                        self.i = np.append(self.i, self.sr * self.Cd * (1 - np.exp((-self.input.t[:self.input.dp]) / (self.Ru * self.Cd))))
+                    elif iy < self.ns:
+                        self.i = np.append(self.i, -self.sr * self.Cd * (1 - np.exp((-self.input.t[:self.input.dp]) / (self.Ru * self.Cd))))
+                        self.i = np.append(self.i, self.sr * self.Cd * (1 - np.exp((-self.input.t[:self.input.dp]) / (self.Ru * self.Cd))))
+                
+                self.i = np.append(self.i, -self.sr * self.Cd * (1 - np.exp((-self.input.t[:self.input.uppdp]) / (self.Ru * self.Cd))))
+
+
     def detailed(self):
         '''Returns E vs. i for a CSV performed on a capacitor with parameters derived from the Capacitance() class\n
         Uses equation 1.6.17 from the 3rd edition of Electrochemical Methods:\n
@@ -76,7 +106,7 @@ class Capacitance:
 
 if __name__ == '__main__':
     
-    start = time.time()
+
     cwd = os.getcwd()
 
     try:
@@ -96,7 +126,9 @@ if __name__ == '__main__':
             raise
     
     '''SIMULATION'''
-    shape = wf.CSV(Eini = 0, Eupp = 0.5, Elow = 0, dE = 0.001, sr = 0.1, ns = 1, st = 0.001, detailed = False)
+    start = time.time()
+    
+    shape = wf.CV(Eini = 0, Eupp = 0.5, Elow = 0, dE = 0.001, sr = 0.1, ns = 1)
 
     instance = Capacitance(input = shape, Cd = 0.000050, Ru = 500)
     
