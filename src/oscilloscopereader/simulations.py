@@ -85,6 +85,7 @@ class Capacitance:
         self.detailed = self.input.detailed
         
         if self.Eini == self.Elow:
+            self.i = np.array([])
             self.iplus = np.zeros(self.ns * self.input.sp * self.input.dp)
             self.iminus = np.zeros(self.ns * self.input.sp * self.input.dp)
             for ix in range(0, self.ns):
@@ -94,13 +95,15 @@ class Capacitance:
                 for iy in range(0, self.input.dp):
                     space = int(ix * self.input.dp * self.input.sp + iy * self.input.sp)
                     self.iminus[space:] = np.add(self.iminus[space:], (-self.dE/self.Ru) * np.exp((-self.input.tWF[:self.input.sp * self.input.dp - space]) / (self.Ru * self.Cd)))
-                self.i = np.append(self.iplus, self.iminus)
+                self.i = np.append(self.i, self.iplus)
+                self.i = np.append(self.i, self.iminus)
                 self.iplus = np.zeros(self.ns * self.input.sp * self.input.dp)
                 self.iminus = np.zeros(self.ns * self.input.sp * self.input.dp)
+        pass
     
     def results(self):
         '''Returns the output'''
-        self.output = zip(self.input.t, self.input.EWF, self.i)
+        self.output = zip(self.input.tPLOT, self.input.EPLOT, self.i)
         return self.output
 
 
@@ -128,7 +131,7 @@ if __name__ == '__main__':
     '''SIMULATION'''
     start = time.time()
     
-    shape = wf.CV(Eini = 0, Eupp = 0.5, Elow = 0, dE = 0.001, sr = 0.1, ns = 1)
+    shape = wf.CSV(Eini = 0, Eupp = 0.5, Elow = 0, dE = 0.001, sr = 0.1, ns = 1, st = 0.001, detailed = True)
 
     instance = Capacitance(input = shape, Cd = 0.000050, Ru = 500)
     
@@ -139,6 +142,6 @@ if __name__ == '__main__':
     '''SAVE DATA'''
     filepath = f'{cwd}/data/{shape.type} {shape.subtype}.txt'
     with open(filepath, 'w') as file:
-        for ix, iy in instance.results():
-            file.write(str(ix) + ',' + str(iy) + '\n')
+        for ix, iy, iz in instance.results():
+            file.write(str(ix) + ',' + str(iy) + ',' + str(iz) + '\n')
     
