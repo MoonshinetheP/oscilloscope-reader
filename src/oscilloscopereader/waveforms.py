@@ -241,8 +241,8 @@ class CV(sweep):
                 self.E = np.array([self.Eini])
                 for ix in range(0, self.ns):
                     self.E = np.append(self.E, np.round(np.linspace(self.Eini - self.dE, self.Elow, self.lowdp, endpoint = True, dtype = np.float32), 3))
-                    self.E = np.append(self.E, np.round(np.linspace(self.Elow + self.dE, self.Elow, self.dp, endpoint = True, dtype = np.float32), 3))
-                    self.E = np.append(self.E, np.round(np.linspace(self.Elow + self.dE, self.Eini, self.uppdp, endpoint = True, dtype = np.float32), 3))
+                    self.E = np.append(self.E, np.round(np.linspace(self.Elow + self.dE, self.Eupp, self.dp, endpoint = True, dtype = np.float32), 3))
+                    self.E = np.append(self.E, np.round(np.linspace(self.Eupp + self.dE, self.Eini, self.uppdp, endpoint = True, dtype = np.float32), 3))
             
         '''PLOTTING WAVEFORM'''
         self.tPLOT = self.t
@@ -344,8 +344,8 @@ class CSV(hybrid):
                 self.E = np.array([self.Eini])
                 for ix in range(0, self.ns):
                     self.E = np.append(self.E, np.linspace(self.Eini - self.dE, self.Elow, self.lowdp, endpoint = True, dtype = np.float32))
-                    self.E = np.append(self.E, np.linspace(self.Elow + self.dE, self.Elow, self.dp, endpoint = True, dtype = np.float32))
-                    self.E = np.append(self.E, np.linspace(self.Elow + self.dE, self.Eini, self.uppdp, endpoint = True, dtype = np.float32))
+                    self.E = np.append(self.E, np.linspace(self.Elow + self.dE, self.Eupp, self.dp, endpoint = True, dtype = np.float32))
+                    self.E = np.append(self.E, np.linspace(self.Eupp + self.dE, self.Eini, self.uppdp, endpoint = True, dtype = np.float32))
             
             self.E = np.round(self.E, 6)
         
@@ -407,8 +407,8 @@ if __name__ == '__main__':
             raise
     filepath = cwd + '/data/' + 'waveform.txt'
 
-    #wf = CV(Eini = 0.2, Eupp = 0.8, Elow = 0.2, dE = 0.002, sr = 0.05, ns  = 2)
-    wf = CSV(Eini = 0, Eupp = 0.5, Elow = 0, dE = 0.01, sr = 0.1, ns = 1, st = 0.001, detailed = False)
+    wf = CV(Eini = 0.25, Eupp = 0.5, Elow = 0.0, dE = -0.002, sr = 0.05, ns  = 2)
+    #wf = CSV(Eini = 0, Eupp = 0.5, Elow = 0, dE = 0.01, sr = 0.1, ns = 1, st = 0.001, detailed = False)
 
     with open(filepath, 'w') as file:
         for ix, iy, iz in wf.output():
