@@ -1,3 +1,4 @@
+import sys
 import os
 from errno import EEXIST
 import time
@@ -34,7 +35,7 @@ if __name__ == '__main__':
     start = time.time()
 
     #shape = wf.CV(Eini = 0.25, Eupp = 0.5, Elow = 0, dE = -0.005, sr = 0.1, ns = 1)
-    shape = wf.CSV(Eini = 0, Eupp = 0.5, Elow = 0, dE = 0.001, sr = 0.1, ns = 1, st = 0.001, detailed = True)
+    shape = wf.CSV(Eini = 0.5, Eupp = 0.5, Elow = 0, dE = -0.001, sr = 0.1, ns = 1, st = 0.001, detailed = True)
 
     instance = sim.Capacitance(input = shape, Cd = 0.000050, Ru = 500)
     
@@ -47,6 +48,9 @@ if __name__ == '__main__':
     left, = ax1.plot(shape.tWF, shape.EWF, linewidth = 1, linestyle = '-', color = 'blue', marker = None, label = None, visible = True)
     if shape.detailed == True:
         right, = ax2.plot(shape.EPLOT[shape.sp:], instance.i, linewidth = 1, linestyle = '-', color = 'red', marker = None, label = None, visible = True)
+    elif shape.detailed == False:
+        print('\n' + 'Cannot currently plot simplified CSV waveforms, try usng CV instead' + '\n')
+        sys.exit()
     else:
         right, = ax2.plot(shape.EPLOT[1:], instance.i, linewidth = 1, linestyle = '-', color = 'red', marker = None, label = None, visible = True)
 
