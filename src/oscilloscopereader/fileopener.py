@@ -1,13 +1,49 @@
+'''
+===================================================================================================
+Copyright (C) 2023 Steven Linfield
+
+This file is part of the oscilloscope-reader package. This package is free software: you can 
+redistribute it and/or modify it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or (at your option) any later 
+version. This software is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+GNU General Public License for more details. You should have received a copy of the GNU General 
+Public License along with oscilloscope-reader. If not, see https://www.gnu.org/licenses/
+===================================================================================================
+
+Package title:      oscilloscope-reader
+Repository:         https://github.com/MoonshinetheP/oscilloscope-reader
+Date of creation:   22/10/2022
+Main author:        Steven Linfield (MoonshinetheP)
+Collaborators:      None
+Acknowledgements:   None
+
+Filename:           fileopener.py
+
+===================================================================================================
+
+Description:
+
+This file contains the code used by the oscilloscope-reader package to open single oscilloscope 
+files with .csv formats and to append the content of these files into numpy arrays which can then
+be analysed and/or plotted. 
+
+===================================================================================================
+
+How to use this file:
+    
+This file has no standalone operational capabilities.
+
+===================================================================================================
+'''
+
 import pandas as pd
-import errno
 
 class Oscilloscope:
-    '''A class which opens an oscilloscope .csv file and converts it into a usable numpy array'''
-    def __init__(self,file):
-        df = pd.read_csv(file, header = 1, low_memory = False)
-        self.array = df.to_numpy().astype(float)[:,1]
-
-if __name__ == '__main__':
-    path = 'C:/Users/SLinf/Documents/GitHub/oscilloscope-reader/'
-    file = 'Newfile15.csv'
-    test = Oscilloscope(path + file)
+    '''Opens a single oscilloscope file with a .csv format and converts it into a usable numpy array'''
+    def __init__(self, file):
+        try:
+            df = pd.read_csv(file, header = 1, low_memory = False)
+            self.i = df.to_numpy().astype(float)[:,1]
+        except:
+            raise
