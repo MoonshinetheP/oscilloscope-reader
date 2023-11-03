@@ -1,3 +1,50 @@
+'''
+===================================================================================================
+Copyright (C) 2023 Steven Linfield
+
+This file is part of the oscilloscope-reader package. This package is free software: you can 
+redistribute it and/or modify it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or (at your option) any later 
+version. This software is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+GNU General Public License for more details. You should have received a copy of the GNU General 
+Public License along with oscilloscope-reader. If not, see https://www.gnu.org/licenses/
+===================================================================================================
+
+Package title:      oscilloscope-reader
+Repository:         https://github.com/MoonshinetheP/oscilloscope-reader
+Date of creation:   22/10/2022
+Main author:        Steven Linfield (MoonshinetheP)
+Collaborators:      None
+Acknowledgements:   None
+
+Filename:           simulations.py
+
+===================================================================================================
+
+Description:
+
+ 
+
+===================================================================================================
+
+How to use this file:
+    
+
+
+===================================================================================================
+
+Note:
+
+
+
+===================================================================================================
+'''
+
+
+
+
+
 import sys
 import os
 import time
@@ -15,13 +62,16 @@ class Capacitance:
     def __init__(self, input, Cd = 0.000050, Ru = 500):
         '''Defines the parameters of the simulation, checks for errors, and makes a potential waveform to be used by other functions'''
 
+        self.type = 'simulated'
+        
         self.input = input
         self.Cd = Cd            # Double layer capacitance in F
         self.Ru = Ru            # Uncompensated resistance in Ohms
+        self.cf = -1
         
-        if self.input.subtype == 'CV':
+        if self.input.type == 'CV':
             self.simple()
-        if self.input.subtype == 'CSV':
+        if self.input.type == 'CSV':
             self.detailed() 
 
     def simple(self):
@@ -140,7 +190,7 @@ class Capacitance:
                 pass
 
     
-    def results(self):
+    def output(self):
         '''Returns the output'''
         self.output = zip(self.input.tPLOT, self.input.EPLOT, self.i)
         return self.output
@@ -170,17 +220,16 @@ if __name__ == '__main__':
     '''SIMULATION'''
     start = time.time()
     
-    shape = wf.CSV(Eini = 0.5, Eupp = 0.5, Elow = 0, dE = -0.001, sr = 0.1, ns = 1, st = 0.001, detailed = True)
-
-    instance = Capacitance(input = shape, Cd = 0.000050, Ru = 500)
+    shape = wf.CV(Eini = 0, Eupp = 0.5, Elow = 0, dE = 0.0025, sr = 0.05, ns = 1)
+    #shape = wf.CSV(Eini = 0, Eupp = 0.5, Elow = 0, dE = 0.0025, sr = 0.05, ns = 1, st = 0.0001, detailed = True, sampled = True, alpha = 0.25)
+    instance = Capacitance(input = shape, Cd = 0.00010, Ru = 750)
     
     end = time.time()
     print(f'The simulation took {end-start} seconds to complete')
 
 
     '''SAVE DATA'''
-    filepath = f'{cwd}/data/{shape.type} {shape.subtype}.txt'
+    filepath = f'{cwd}/data/{time.strftime("%Y-%m-%d %H-%M-%S")} {shape.type} simulation.txt'
     with open(filepath, 'w') as file:
-        for ix, iy, iz in instance.results():
+        for ix, iy, iz in instance.output():
             file.write(str(ix) + ',' + str(iy) + ',' + str(iz) + '\n')
-    
