@@ -1,13 +1,4 @@
-data/
 __pycache__
-missingfunctions.py
-Newfile15.csv
-CV.txt
-CSV.txt
-raw.txt
-MA.txt
-CA0.25.txt
-CA0.5.txt
-CA0.75.txt
-CA0.95.txt
-Checking.opju
+data/
+analysis/
+plots/
