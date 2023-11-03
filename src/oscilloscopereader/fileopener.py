@@ -37,13 +37,28 @@ This file has no standalone operational capabilities.
 ===================================================================================================
 '''
 
+
+import sys
 import pandas as pd
+
 
 class Oscilloscope:
     '''Opens a single oscilloscope file with a .csv format and converts it into a usable numpy array'''
-    def __init__(self, file):
+    def __init__(self, file, cf):
+
+        self.type = 'imported'
+
+        self.file = file
+        self.cf = float(cf)
+        if isinstance(self.cf, (float)) is False:
+            print('\n' + 'An invalid datatype was used for the conversion factor. Enter a float value.' + '\n')
+            sys.exit()
+        if self.cf <= 0:
+            print('\n' + 'Conversion factor must be a postive non-zero value' + '\n')
+            sys.exit()
+
         try:
-            df = pd.read_csv(file, header = 1, low_memory = False)
+            df = pd.read_csv(self.file, header = 1, low_memory = False)
             self.i = df.to_numpy().astype(float)[:,1]
         except:
             raise
