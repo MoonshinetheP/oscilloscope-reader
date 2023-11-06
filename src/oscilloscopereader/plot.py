@@ -38,6 +38,7 @@ of the plotted data or to increase the number of results shown on each plot.
 ===================================================================================================
 '''
 
+
 import os
 import time
 import numpy as np
@@ -79,12 +80,11 @@ class Plotter:
         ax2.set_xlabel('E / V', labelpad = 5, fontsize = 15)        # defines the x-axis label and settings of the right-hand subplot 
         ax2.set_ylabel('i / A', labelpad = 5, fontsize = 15)        # defines the y-axis label and settings of the right-hand subplot
 
-        '''PLOT GENERATION'''
+        '''PLOT GENERATION & MANAGEMENT '''
         if self.save == True:
             plt.savefig(f'{os.getcwd()}/plots/{time.strftime("%Y-%m-%d %H-%M-%S")} {instance.input.type} {shape.label} data with {instance.analysis}.png')      # saves the figure as a .png image
         
         if self.display == True:
             plt.show()      # displays the figure
 
-        '''PLOT CLOSURE'''
         plt.close()     # closes the figure
