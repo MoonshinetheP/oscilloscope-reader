@@ -42,9 +42,6 @@ Note:
 '''
 
 
-
-
-
 import sys
 import os
 import time
@@ -56,149 +53,194 @@ import waveforms as wf
 
 
 class Capacitance:
-    '''Simulates the charging of a double layer when using CV or CSV \n 
-    Also takes input parameters and uses them to create potential waveforms for CV and CSV'''
-    
+    '''Write something here'''
     def __init__(self, input, Cd = 0.000050, Ru = 500):
-        '''Defines the parameters of the simulation, checks for errors, and makes a potential waveform to be used by other functions'''
-
-        self.type = 'simulated'
         
+        self.type = 'simulated'
+
         self.input = input
+        self.Eini = input.Eini        # Start potential in V
+        self.Eupp = input.Eupp        # Upper vertex potential in V
+        self.Elow = input.Elow        # Lower vertex potential in V
+        self.dE = input.dE            # Step size in V
+        self.sr = input.sr            # Scan rate in V/s
+        self.ns = input.ns            # Number of scans (no unit)
+        self.osf = input.osf          # Oscilloscope sampling frequency
+
         self.Cd = Cd            # Double layer capacitance in F
         self.Ru = Ru            # Uncompensated resistance in Ohms
-        self.cf = -1
+
+        self.cf = -1       
         
-        if self.input.type == 'CV':
+        if self.input.type == 'linear':
             self.simple()
-        if self.input.type == 'CSV':
+        if self.input.type == 'staircase':
             self.detailed() 
 
     def simple(self):
         '''Returns E vs. i for a CV performed on a capacitor with parameters derived from the Capacitance() class\n
         Uses equation 1.6.23 from the 3rd edition of Electrochemical Methods:\n
         i = sr*Cd*(1-np.exp(-t/(Ru*Cd)))'''
-        self.Eini = self.input.Eini        # Start potential in V
-        self.Eupp = self.input.Eupp        # Upper vertex potential in V
-        self.Elow = self.input.Elow        # Lower vertex potential in V
-        self.dE = self.input.dE            # Step size in V
-        self.sr = self.input.sr            # Scan rate in V/s
-        self.ns = self.input.ns            # Number of scans (no unit)
-
+        
+        self.i = np.array([])
+        
         if self.Eini == self.Elow:
-            self.i = np.array([])
             for iy in range(0, self.ns):
                 self.i = np.append(self.i, self.sr * self.Cd * (1 - np.exp((-self.input.t[:self.input.dp]) / (self.Ru * self.Cd))))
                 self.i = np.append(self.i, -self.sr * self.Cd * (1 - np.exp((-self.input.t[:self.input.dp]) / (self.Ru * self.Cd))))
         
         if self.Eini == self.Eupp:
-            self.i = np.array([])
             for iy in range(0, self.ns):
                 self.i = np.append(self.i, -self.sr * self.Cd * (1 - np.exp((-self.input.t[:self.input.dp]) / (self.Ru * self.Cd))))
                 self.i = np.append(self.i, self.sr * self.Cd * (1 - np.exp((-self.input.t[:self.input.dp]) / (self.Ru * self.Cd))))
         
         if self.Elow < self.Eini < self.Eupp:  
-            self.i = np.array([])
             if self.dE > 0:
                 for iy in range(0, self.ns):
                     if iy == 0:
-                        self.i = np.append(self.i, self.sr * self.Cd * (1 - np.exp((-self.input.t[:self.input.uppdp]) / (self.Ru * self.Cd))))
+                        self.i = np.append(self.i, self.sr * self.Cd * (1 - np.exp((-self.input.t[:self.input.udp]) / (self.Ru * self.Cd))))
                         self.i = np.append(self.i, -self.sr * self.Cd * (1 - np.exp((-self.input.t[:self.input.dp]) / (self.Ru * self.Cd))))
-                    elif iy < self.ns:
+                    else:
                         self.i = np.append(self.i, self.sr * self.Cd * (1 - np.exp((-self.input.t[:self.input.dp]) / (self.Ru * self.Cd))))
                         self.i = np.append(self.i, -self.sr * self.Cd * (1 - np.exp((-self.input.t[:self.input.dp]) / (self.Ru * self.Cd))))
                 
-                self.i = np.append(self.i, self.sr * self.Cd * (1 - np.exp((-self.input.t[:self.input.lowdp]) / (self.Ru * self.Cd))))
+                self.i = np.append(self.i, self.sr * self.Cd * (1 - np.exp((-self.input.t[:self.input.ldp]) / (self.Ru * self.Cd))))
 
             if self.dE < 0:
                 for iy in range(0, self.ns):
                     if iy == 0:
-                        self.i = np.append(self.i, -self.sr * self.Cd * (1 - np.exp((-self.input.t[:self.input.lowdp]) / (self.Ru * self.Cd))))
+                        self.i = np.append(self.i, -self.sr * self.Cd * (1 - np.exp((-self.input.t[:self.input.ldp]) / (self.Ru * self.Cd))))
                         self.i = np.append(self.i, self.sr * self.Cd * (1 - np.exp((-self.input.t[:self.input.dp]) / (self.Ru * self.Cd))))
-                    elif iy < self.ns:
+                    else:
                         self.i = np.append(self.i, -self.sr * self.Cd * (1 - np.exp((-self.input.t[:self.input.dp]) / (self.Ru * self.Cd))))
                         self.i = np.append(self.i, self.sr * self.Cd * (1 - np.exp((-self.input.t[:self.input.dp]) / (self.Ru * self.Cd))))
                 
-                self.i = np.append(self.i, -self.sr * self.Cd * (1 - np.exp((-self.input.t[:self.input.uppdp]) / (self.Ru * self.Cd))))
+                self.i = np.append(self.i, -self.sr * self.Cd * (1 - np.exp((-self.input.t[:self.input.udp]) / (self.Ru * self.Cd))))
+        
+        self.E = self.input.E[:self.i.size]
 
 
     def detailed(self):
         '''Returns E vs. i for a CSV performed on a capacitor with parameters derived from the Capacitance() class\n
         Uses equation 1.6.17 from the 3rd edition of Electrochemical Methods:\n
-        i = (dE/Ru)*np.exp(-t/(Ru*Cd))'''
-        self.Eini = self.input.Eini        # Start potential in V
-        self.Eupp = self.input.Eupp        # Upper vertex potential in V
-        self.Elow = self.input.Elow        # Lower vertex potential in V
-        self.dE = np.abs(self.input.dE)            # Step size in V
-        self.sr = self.input.sr            # Scan rate in V/s
-        self.ns = self.input.ns            # Number of scans (no unit)
-        self.st = self.input.st
-        self.detailed = self.input.detailed
+        i = (dE/Ru)*np.exp(-t/(Ru*Cd))'''   
         
-
+        self.i = np.array([])
+        self.iplus = np.zeros(self.input.dp)#dp is different here
+        self.iminus = np.zeros(self.input.dp)        
+        
         if self.Eini == self.Elow:
-            self.i = np.array([])
-            self.iplus = np.zeros(self.input.sp * self.input.dp)
-            self.iminus = np.zeros(self.input.sp * self.input.dp)
             for ix in range(0, self.ns):
-                for iy in range(0, self.input.dp):
-                    space = int(iy * self.input.sp)
-                    self.iplus[space:] = np.add(self.iplus[space:], (self.dE/self.Ru) * np.exp((-self.input.tWF[:self.input.sp * self.input.dp - space]) / (self.Ru * self.Cd)))
-                for iy in range(0, self.input.dp):
-                    space = int(iy * self.input.sp)
-                    self.iminus[space:] = np.add(self.iminus[space:], (-self.dE/self.Ru) * np.exp((-self.input.tWF[:self.input.sp * self.input.dp - space]) / (self.Ru * self.Cd)))
+                for iy in range(0, self.input.steps):#from here
+                    space = int(iy * self.input.interval)
+                    self.iplus[space:] = np.add(self.iplus[space:], (self.dE/self.Ru) * np.exp((-self.input.t[:self.input.dp - space]) / (self.Ru * self.Cd)))
+                for iy in range(0, self.input.steps):
+                    space = int(iy * self.input.interval)
+                    self.iminus[space:] = np.add(self.iminus[space:], (-self.dE/self.Ru) * np.exp((-self.input.t[:self.input.dp - space]) / (self.Ru * self.Cd)))
                 self.i = np.append(self.i, self.iplus)
                 self.i = np.append(self.i, self.iminus)
-                self.iplus = np.zeros(self.input.sp * self.input.dp)
-                self.iminus = np.zeros(self.input.sp * self.input.dp)
+                self.iplus = np.zeros(self.input.dp)
+                self.iminus = np.zeros(self.input.dp)
 
         if self.Eini == self.Eupp:
-            self.i = np.array([])
-            self.iplus = np.zeros(self.input.sp * self.input.dp)
-            self.iminus = np.zeros(self.input.sp * self.input.dp)
             for ix in range(0, self.ns):
-                for iy in range(0, self.input.dp):
-                    space = int(iy * self.input.sp)
-                    self.iminus[space:] = np.add(self.iminus[space:], (-self.dE/self.Ru) * np.exp((-self.input.tWF[:self.input.sp * self.input.dp - space]) / (self.Ru * self.Cd)))
-                for iy in range(0, self.input.dp):
-                    space = int(iy * self.input.sp)
-                    self.iplus[space:] = np.add(self.iplus[space:], (self.dE/self.Ru) * np.exp((-self.input.tWF[:self.input.sp * self.input.dp - space]) / (self.Ru * self.Cd)))
+                for iy in range(0, self.input.steps):
+                    space = int(iy * self.input.interval)
+                    self.iminus[space:] = np.add(self.iminus[space:], (-self.dE/self.Ru) * np.exp((-self.input.t[:self.input.dp - space]) / (self.Ru * self.Cd)))
+                for iy in range(0, self.input.steps):
+                    space = int(iy * self.input.interval)
+                    self.iplus[space:] = np.add(self.iplus[space:], (self.dE/self.Ru) * np.exp((-self.input.t[:self.input.dp - space]) / (self.Ru * self.Cd)))
                 self.i = np.append(self.i, self.iminus)
                 self.i = np.append(self.i, self.iplus)
-                self.iplus = np.zeros(self.input.sp * self.input.dp)
-                self.iminus = np.zeros(self.input.sp * self.input.dp)
+                self.iplus = np.zeros(self.input.dp)
+                self.iminus = np.zeros(self.input.dp)
 
         if self.Elow < self.Eini < self.Eupp:  
-            self.i = np.array([])
-            self.iupp = np.zeros(self.input.sp * self.input.uppdp)
-            self.ilow = np.zeros(self.input.sp * self.input.lowdp)
-            self.iplus = np.zeros(self.input.sp * self.input.dp)
-            self.iminus = np.zeros(self.input.sp * self.input.dp)
+            self.iupp = np.zeros(self.input.udp)
+            self.ilow = np.zeros(self.input.ldp)        
+
             if self.dE > 0:
                 for ix in range(0, self.ns):
-                    for iy in range(0, self.input.dp):
-                        space = int(iy * self.input.sp)
-                        self.iplus[space:] = np.add(self.iplus[space:], (self.dE/self.Ru) * np.exp((-self.input.tWF[:self.input.sp * self.input.dp - space]) / (self.Ru * self.Cd)))
-                    for iy in range(0, self.input.dp):
-                        space = int(iy * self.input.sp)
-                        self.iminus[space:] = np.add(self.iminus[space:], (-self.dE/self.Ru) * np.exp((-self.input.tWF[:self.input.sp * self.input.dp - space]) / (self.Ru * self.Cd)))
-                    self.i = np.append(self.i, self.iplus)
-                    self.i = np.append(self.i, self.iminus)
-                    self.iplus = np.zeros(self.input.sp * self.input.dp)
-                    self.iminus = np.zeros(self.input.sp * self.input.dp)
+                    if ix == 0:
+                        for iy in range(0, self.input.usteps):
+                            space = int(iy * self.input.interval)
+                            self.iupp[space:] = np.add(self.iupp[space:], (self.dE/self.Ru) * np.exp((-self.input.t[:self.input.udp - space]) / (self.Ru * self.Cd)))
+                        for iy in range(0, self.input.steps):
+                            space = int(iy * self.input.interval)
+                            self.iminus[space:] = np.add(self.iminus[space:], (-self.dE/self.Ru) * np.exp((-self.input.t[:self.input.dp - space]) / (self.Ru * self.Cd)))
+                        
+                        self.i = np.append(self.i, self.iupp)
+                        self.i = np.append(self.i, self.iminus)
+                        self.iminus = np.zeros(self.input.dp)
+
+                    else:
+                        for iy in range(0, self.input.steps):
+                            space = int(iy * self.input.interval)
+                            self.iplus[space:] = np.add(self.iplus[space:], (self.dE/self.Ru) * np.exp((-self.input.t[:self.input.dp - space]) / (self.Ru * self.Cd)))
+                        for iy in range(0, self.input.steps):
+                            space = int(iy * self.input.interval)
+                            self.iminus[space:] = np.add(self.iminus[space:], (-self.dE/self.Ru) * np.exp((-self.input.t[:self.input.dp - space]) / (self.Ru * self.Cd)))
+                        
+                        self.i = np.append(self.i, self.iplus)
+                        self.i = np.append(self.i, self.iminus)
+                        self.iplus = np.zeros(self.input.dp)
+                        self.iminus = np.zeros( self.input.dp)
+
+                for iz in range(0, self.input.lsteps):
+                    space = int(iz * self.input.interval)
+                    self.ilow[space:] = np.add(self.ilow[space:], (self.dE/self.Ru) * np.exp((-self.input.t[:self.input.ldp - space]) / (self.Ru * self.Cd)))
+                        
+                self.i = np.append(self.i, self.ilow)
+
             if self.dE < 0:
-                pass
+                for ix in range(0, self.ns):
+                    if ix == 0:
+                        for iy in range(0, self.input.lsteps):
+                            space = int(iy * self.input.interval)
+                            self.ilow[space:] = np.add(self.ilow[space:], (-self.dE/self.Ru) * np.exp((-self.input.t[:self.input.ldp - space]) / (self.Ru * self.Cd)))
+                        for iy in range(0, self.input.steps):
+                            space = int(iy * self.input.interval)
+                            self.iplus[space:] = np.add(self.iplus[space:], (self.dE/self.Ru) * np.exp((-self.input.t[:self.input.dp - space]) / (self.Ru * self.Cd)))
+                        
+                        self.i = np.append(self.i, self.ilow)
+                        self.i = np.append(self.i, self.iplus)
+                        self.iplus = np.zeros(self.input.dp)
+
+                    else:
+                        for iy in range(0, self.input.steps):
+                            space = int(iy * self.input.interval)
+                            self.iminus[space:] = np.add(self.iminus[space:], (-self.dE/self.Ru) * np.exp((-self.input.t[:self.input.dp - space]) / (self.Ru * self.Cd)))
+                        for iy in range(0, self.input.steps):
+                            space = int(iy * self.input.interval)
+                            self.iplus[space:] = np.add(self.iplus[space:], (self.dE/self.Ru) * np.exp((-self.input.t[:self.input.dp - space]) / (self.Ru * self.Cd)))
+                        
+                        self.i = np.append(self.i, self.iminus)
+                        self.i = np.append(self.i, self.iplus)
+                        self.iminus = np.zeros(self.input.dp)
+                        self.iplus = np.zeros(self.input.dp)
+
+                for iz in range(0, self.input.usteps):
+                    space = int(iz * self.input.interval)
+                    self.iupp[space:] = np.add(self.iupp[space:], (-self.dE/self.Ru) * np.exp((-self.input.t[:self.input.udp - space]) / (self.Ru * self.Cd)))
+                        
+                self.i = np.append(self.i, self.iupp)
 
     
     def output(self):
-        '''Returns the output'''
-        self.output = zip(self.input.tPLOT, self.input.EPLOT, self.i)
-        return self.output
+        '''Returns the simulated data for checking or analysis purposes'''
+        zipped = zip(self.input.t, self.input.E, self.i)
+        return zipped
 
+
+"""
+===================================================================================================
+RUNNING SIMULATIONS FROM MAIN
+===================================================================================================
+"""
 
 if __name__ == '__main__':
     
-
+    '''1. MAKE A /DATA FOLDER''' 
     cwd = os.getcwd()
 
     try:
@@ -208,28 +250,24 @@ if __name__ == '__main__':
             pass
         else: 
             raise
+
+    '''2. DEFINE THE START TIME'''
+    start = time.time()  
+
+    '''3. DESCRIBE THE WAVEFORM'''
+    #shape = wf.CyclicLinearVoltammetry(Eini = 0, Eupp = 0.5, Elow = 0, dE = 0.002, sr = 0.5, ns = 1, osf = None)
+    shape = wf.CyclicStaircaseVoltammetry(Eini = 0, Eupp = 0.5, Elow = -0.5, dE = -0.002, sr = 0.5, ns = 1, osf = 4000)
     
-    try:
-        os.makedirs(cwd + '/plots')
-    except OSError as exc:
-        if exc.errno == EEXIST and os.path.isdir(cwd + '/plots'):
-            pass
-        else: 
-            raise
+    '''4. DESCRIBE THE SIMULATION CONDITIONS'''
+    input = Capacitance(shape, Cd = 0.00010, Ru = 750)
+
+    '''5. SAVE THE DATA'''
+    filepath = f'{cwd}/data/{time.strftime("%Y-%m-%d %H-%M-%S")} {shape.type} waveform.txt'
+    with open(filepath, 'w') as file:
+        for ix, iy, iz in input.output():
+            file.write(str(ix) + ',' + str(iy) + ',' + str(iz) + '\n')
     
-    '''SIMULATION'''
-    start = time.time()
-    
-    shape = wf.CV(Eini = 0, Eupp = 0.5, Elow = 0, dE = 0.0025, sr = 0.05, ns = 1)
-    #shape = wf.CSV(Eini = 0, Eupp = 0.5, Elow = 0, dE = 0.0025, sr = 0.05, ns = 1, st = 0.0001, detailed = True, sampled = True, alpha = 0.25)
-    instance = Capacitance(input = shape, Cd = 0.00010, Ru = 750)
-    
+    '''6. DEFINE THE END TIME'''
     end = time.time()
     print(f'The simulation took {end-start} seconds to complete')
 
-
-    '''SAVE DATA'''
-    filepath = f'{cwd}/data/{time.strftime("%Y-%m-%d %H-%M-%S")} {shape.type} simulation.txt'
-    with open(filepath, 'w') as file:
-        for ix, iy, iz in instance.output():
-            file.write(str(ix) + ',' + str(iy) + ',' + str(iz) + '\n')

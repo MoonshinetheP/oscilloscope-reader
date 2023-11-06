@@ -57,7 +57,8 @@ from errno import EEXIST
 class Operations:
     def __init__(self, shape, input, MA = False, window = 1000, step = 100, CS = False, alpha = 0.5):
         self.shape = shape
-        self.input = input.i
+        self.input = input
+        self.i = input.i
         self.interval = shape.interval
         self.cf = input.cf
         self.MA = MA
@@ -83,7 +84,10 @@ class Operations:
             print('\n' + '' + '\n')
             sys.exit()
 
-        self.Intervals()
+        if shape.type == 'staircase':
+            self.Intervals()
+        else:
+            self.E = self.shape.E
 
         if self.MA == False and self.CS == False:
             self.Raw()
@@ -102,18 +106,18 @@ class Operations:
         ix = 0
         self.peaks = np.array([])
 
-        while ix < (self.input.size - self.interval + 1):
-            self.peaks = np.append(self.peaks, np.argmax(np.abs(self.input[ix : ix + self.interval])) + ix + 1)
+        while ix < (self.i.size - self.interval + 1):
+            self.peaks = np.append(self.peaks, np.argmax(np.abs(self.i[ix : ix + self.interval])) + ix + 1)
             ix += self.interval
         
         self.values =np.array([])
         for iy in self.peaks:
-            self.values = np.append(self.values, self.input[int(iy)])
+            self.values = np.append(self.values, self.i[int(iy)])
 
         iw = 0
         self.troughs = np.array([])
         while iw < self.peaks.size:
-            self.troughs = np.append(self.troughs, self.peaks[iw] - np.argmin(self.input[int(self.peaks[iw]) - 200: int(self.peaks[iw])]))
+            self.troughs = np.append(self.troughs, self.peaks[iw] - np.argmin(self.i[int(self.peaks[iw]) - 200: int(self.peaks[iw])]))
             iw += 1
 
         iz = 0
@@ -122,20 +126,20 @@ class Operations:
             if iz <= -np.abs(self.values[1]):
                 self.lv = int(self.troughs[np.where(spacing == iz)[0][0]])
                 if self.shape.dE > 0:
-                        self.EPLOT = np.concatenate((self.shape.EPLOT[self.shape.uppdp + self.shape.dp - self.lv: ], self.shape.EPLOT[:self.shape.uppdp + self.shape.dp -self.lv]))
+                        self.E = np.concatenate((self.shape.E[self.shape.udp + self.shape.dp - self.lv: ], self.shape.E[:self.shape.udp + self.shape.dp -self.lv]))
                 elif self.shape.dE <0:
-                         self.EPLOT = np.concatenate((self.shape.EPLOT[self.shape.lowdp - self.lv: ], self.shape.EPLOT[:self.shape.lowdp - self.lv]))
+                         self.E = np.concatenate((self.shape.E[self.shape.ldp - self.lv: ], self.shape.E[:self.shape.ldp - self.lv]))
                 break
 
             elif iz >= np.abs(self.values[1]):
                 self.uv = int(self.troughs[np.where(spacing == iz)[0][0]])
                 if self.shape.dE > 0:
-                        self.EPLOT = np.concatenate((self.shape.EPLOT[self.shape.uppdp - self.uv: ], self.shape.EPLOT[:self.shape.uppdp - self.uv]))
+                        self.E = np.concatenate((self.shape.E[self.shape.udp - self.uv: ], self.shape.E[:self.shape.udp - self.uv]))
                 elif self.shape.dE <0:
-                         self.EPLOT = np.concatenate((self.shape.EPLOT[self.shape.dp + self.shape.lowdp - self.uv: ], self.shape.EPLOT[:self.shape.dp + self.shape.lowdp - self.uv]))
+                         self.E = np.concatenate((self.shape.E[self.shape.dp + self.shape.ldp - self.uv: ], self.shape.E[:self.shape.dp + self.shape.ldp - self.uv]))
                 break                         
 
-        return (self.peaks, self.troughs, self.EPLOT)
+        return (self.peaks, self.troughs, self.E)
     
 
     def Raw(self):
@@ -143,8 +147,8 @@ class Operations:
         self.analysis = 'no formatting'
             
         self.index = self.shape.index
-        self.EPLOT = self.EPLOT
-        self.i = self.input * -self.cf
+        self.E = self.E[:self.i.size]
+        self.i = self.i * -self.cf
 
 
     def MovingAverage(self):
@@ -152,12 +156,12 @@ class Operations:
         self.analysis = f'a moving average using a {self.window} window and {self.step} steps'
         a = 0
         self.i = np.array([])
-        while a < self.input.size - self.window + 1:
-            self.i = np.append(self.i, np.average(self.input[a : a + self.window]))
+        while a < self.i.size - self.window + 1:
+            self.i = np.append(self.i, np.average(self.i[a : a + self.window]))
             a += self.step
 
         self.index = self.shape.index
-        self.EPLOT = self.EPLOT[::self.step]
+        self.E = self.E[::self.step]
         self.i = self.i * -self.cf
         
 
@@ -169,20 +173,20 @@ class Operations:
         self.i = np.array([])
         for ix in self.Intervals()[0]:
             try:
-                data = self.input[int(ix) : int(ix + 1)]
+                data = self.i[int(ix) : int(ix + 1)]
             except:
-                data = self.input[int(ix):] 
+                data = self.i[int(ix):] 
             period = self.alpha*(data.size)                                                    
             sampled = np.average(data[-int(period):])   
             self.i = np.append(self.i, sampled)
         
         self.index = self.shape.index
-        self.EPLOT = self.EPLOT[::self.shape.interval]
+        self.E = self.E[::self.shape.interval]
         self.i = self.i * -self.cf
         
     
     def output(self):
-        zipped = zip(self.index, self.EPLOT, self.i)
+        zipped = zip(self.index, self.E, self.i)
         return zipped
 
 
@@ -203,10 +207,11 @@ if __name__ == '__main__':
     start = time.time()  
 
     '''3. ANALYSE THE DEFINED FILE OR SIMULATION'''
-    shape = wf.CyclicLinearVoltammetry(Eini = -0.3, Eupp = 0.8, Elow = -0.65, dE = 0.002, sr = 0.5, ns = 1, osf = 2000000)
-    
-    input = fo.Oscilloscope(filedialog.askopenfilename(), cf = 0.000012)
-    #input = sim.Capacitance(input = shape, Cd = 0.000050, Ru = 500)
+    #shape = wf.CyclicLinearVoltammetry(Eini = -0.3, Eupp = 0.8, Elow = -0.65, dE = 0.002, sr = 0.5, ns = 1, osf = 2000000)
+    shape = wf.CyclicStaircaseVoltammetry(Eini = -0.3, Eupp = 0.8, Elow = -0.65, dE = 0.002, sr = 0.5, ns = 1, osf = 2000000)
+
+    #input = fo.Oscilloscope(filedialog.askopenfilename(), cf = 0.000012)
+    input = sim.Capacitance(shape, Cd = 0.000050, Ru = 500)
     
     instance = Operations(shape, input, MA = True, window = 20000, step = 1000, CS = False, alpha = 0.9)
 
