@@ -43,22 +43,33 @@ import pandas as pd
 
 
 class Oscilloscope:
-    '''Opens a single oscilloscope file with a .csv format and converts it into a usable numpy array'''
+    
+    '''Opens a single oscilloscope file with a .csv format and converts it into a usable numpy array\n
+
+    Requires:\n
+    file - directory location of the oscilloscope data selected for analysis\n
+    cf - user-defined voltage-to-current conversion factor of the potentiostat
+    '''
+
     def __init__(self, file, cf):
 
-        self.type = 'imported'
+        self.type = 'imported'      # label for flow control in operations.py
 
-        self.file = file
-        self.cf = float(cf)
-        if isinstance(self.cf, (float)) is False:
+        self.file = file        # location of the oscilloscope file which has been selected for analysis
+        self.cf = cf        # conversion factor of voltage-to-current defined by the user for the potentiostat/settings used
+
+        '''ERROR MANAGEMENT'''
+        if isinstance(self.cf, (float)) is False:       # checks that the conversion factor is a float value
             print('\n' + 'An invalid datatype was used for the conversion factor. Enter a float value.' + '\n')
             sys.exit()
-        if self.cf <= 0:
-            print('\n' + 'Conversion factor must be a postive non-zero value' + '\n')
+
+        if self.cf <= 0:        # checks that the conversion factor is a positive non-zero value
+            print('\n' + 'Conversion factor must be a postive non-zero value.' + '\n')
             sys.exit()
 
+        '''OSCILLOSCOPE FILE IMPORT'''
         try:
-            df = pd.read_csv(self.file, header = 1, low_memory = False)
-            self.i = df.to_numpy().astype(float)[:,1]
+            df = pd.read_csv(self.file, header = 1, low_memory = False)     # opens the .csv oscilloscope file into a pandas dataframe without the header and with full detail
+            self.i = df.to_numpy().astype(float)[:,1]       # converts the pandas dataframe to a numpy filled with float values
         except:
-            raise
+            raise       # raises an error if the .csv file was not readable for any reason
