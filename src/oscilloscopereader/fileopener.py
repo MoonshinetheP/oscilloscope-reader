@@ -53,7 +53,7 @@ class Oscilloscope:
 
     def __init__(self, file, cf):
 
-        self.type = 'imported'      # label for flow control in operations.py
+        self.type = 'imported'      # label for use in operations.py
 
         self.file = file        # location of the oscilloscope file which has been selected for analysis
         self.cf = cf        # conversion factor of voltage-to-current defined by the user for the potentiostat/settings used
