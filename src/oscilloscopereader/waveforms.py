@@ -41,26 +41,28 @@ Note:
 ===================================================================================================
 '''
 
+
 import sys
 import os
 import time
 import numpy as np
-
 from errno import EEXIST
 
 
-'''WAVEFORM CLASSES'''
 class Waveform:
-    '''Parent class for cyclic voltammetry waveforms'''
+
+    '''Parent class for cyclic voltammetry waveforms \n
+    Contains the parameter initialisation, error management, and output function used by all child classes'''
+
     def __init__(self, Eini, Eupp, Elow, dE, sr, ns, osf):
 
         self.Eini = Eini        # Start potential
         self.Eupp = Eupp        # Upper vertex potential
         self.Elow = Elow        # Lower vertex potential
-        self.dE = dE            # Potential step size
-        self.sr = sr            # Scan rate
-        self.ns = ns            # Number of scans
-        self.osf = osf          # Oscilloscope sampling frequency
+        self.dE = dE        # Potential step size
+        self.sr = sr        # Scan rate
+        self.ns = ns        # Number of scans
+        self.osf = osf      # Oscilloscope sampling frequency
         
         '''DATATYPE ERRORS'''
         if isinstance(self.Eini, (float, int)) is False:
@@ -125,13 +127,41 @@ class Waveform:
 
         self.interval = round(np.abs(self.dE / self.sr) * self.osf)
 
+        self.window = round(self.Eupp - self.Elow, 3)       # potential window (in V) rounded to 3 d.p
+        self.dp = round(self.window * self.osf / self.sr)       # number of data points per potential window (in Sa) rounded to 0 d.p
+        self.uwindow = round(self.Eupp - self.Eini, 3)      # upper partial potential window (in V) rounded to 3 d.p
+        self.udp = round(self.uwindow * self.osf / self.sr)       # number of data points per upper partial potential window (in Sa) rounded to 0 d.p
+        self.lwindow = round(self.Eini - self.Elow, 3)      # lower partial potential window (in V) rounded to 3 d.p
+        self.ldp = round(self.lwindow * self.osf / self.sr)       # number of data points per lower partial potential window (in Sa) rounded to 0 d.p
+        
+        self.tmax = round(2 * self.ns * self.window / self.sr, 6)       # end time for potential waveform (in s) rounded to 6 d.p
+        self.dt = round((1 / self.osf), 9)      # interval time between data points (in s) rounded to 9 d.p
+
+        self.steps = round(np.abs(self.window / self.dE))
+        self.usteps = round(np.abs(self.uwindow / self.dE))
+        self.lsteps = round(np.abs(self.lwindow / self.dE))
+
+
     def output(self):
-        '''Function that returns the waveform for checking or data processing purposes'''
+        '''Returns the waveform for checking or data processing purposes'''
         zipped = zip(self.indexWF, self.tWF, self.EWF)
         return zipped
 
 
+
 class CyclicLinearVoltammetry(Waveform):
+
+    '''Creates the waveform for a cyclic linear voltammetry procedure \n
+    Requires: \n
+    Eini - initial potential (in V) \n
+    Eupp - upper vertex potential (in V) \n
+    Elow - lower vertex potential (in V) \n
+    dE - step size (in V) \n
+    sr - scan rate (in V/s) \n
+    ns - number of scans \n
+    osf - oscilloscope sampling frequency (in Sa/s)
+    '''
+    
     def __init__(self, Eini, Eupp, Elow, dE, sr, ns, osf):
         super().__init__(Eini, Eupp, Elow, dE, sr, ns, osf)
         
@@ -140,82 +170,61 @@ class CyclicLinearVoltammetry(Waveform):
 
         '''STARTING FROM LOWER VERTEX POTENTIAL''' 
         if self.Eini == self.Elow:                
-            self.window = round(self.Eupp - self.Elow, 3)
-            self.dp = round(self.window * self.osf / self.sr)
-            self.tmax = round(2 * self.ns * self.window / self.sr, 6)
-            self.dt = round((1 / self.osf), 9)
-           
+            
             '''INDEX'''
-            self.index = np.arange(0, round((self.tmax + self.dt) / self.dt), 1, dtype = np.int32)
+            self.index = np.arange(0, round((self.tmax + self.dt) / self.dt), 1)
         
             '''TIME'''
-            self.t = self.index * self.dt 
+            self.t = np.round(self.index * self.dt, 9)
             
             '''POTENTIAL'''
             self.E = np.array([self.Eini])
             for ix in range(0, self.ns):
-                self.E = np.append(self.E, np.round(np.linspace(self.Eini + (self.window / self.dp), self.Eupp, self.dp, endpoint = True, dtype = np.float32), 6))
-                self.E = np.append(self.E, np.round(np.linspace(self.Eupp - (self.window / self.dp), self.Eini, self.dp, endpoint = True, dtype = np.float32), 6))
+                self.E = np.append(self.E, np.round(np.linspace(self.Eini + (self.window / self.dp), self.Eupp, self.dp, endpoint = True), 9))
+                self.E = np.append(self.E, np.round(np.linspace(self.Eupp - (self.window / self.dp), self.Eini, self.dp, endpoint = True), 9))
 
-    
+
         '''STARTING FROM UPPER VERTEX POTENTIAL'''
         if self.Eini == self.Eupp:     
-            self.window = round(self.Eupp - self.Elow, 3)
-            self.dp = round(self.window * self.osf / self.sr)
-            self.tmax = round(2 * self.ns * self.window / self.sr, 6)
-            self.dt = round((1 / self.osf), 9)
 
             '''INDEX'''
-            self.index = np.arange(0, round((self.tmax + self.dt) / self.dt), 1, dtype = np.int32)
+            self.index = np.arange(0, round((self.tmax + self.dt) / self.dt), 1)
         
             '''TIME'''
-            self.t = self.index * self.dt  
+            self.t = np.round(self.index * self.dt, 9)
             
             '''POTENTIAL'''
             self.E = np.array([self.Eini])
             for ix in range(0, self.ns):
-                self.E = np.append(self.E, np.round(np.linspace(self.Eini + (self.window / self.dp), self.Elow, self.dp, endpoint = True, dtype = np.float32), 6))
-                self.E = np.append(self.E, np.round(np.linspace(self.Elow - (self.window / self.dp), self.Eini, self.dp, endpoint = True, dtype = np.float32), 6))
+                self.E = np.append(self.E, np.round(np.linspace(self.Eini + (self.window / self.dp), self.Elow, self.dp, endpoint = True), 9))
+                self.E = np.append(self.E, np.round(np.linspace(self.Elow - (self.window / self.dp), self.Eini, self.dp, endpoint = True), 9))
 
 
         '''STARTING IN BETWEEN VERTEX POTENTIALS'''
         if self.Elow < self.Eini < self.Eupp:        
-            self.uppwindow = round(self.Eupp - self.Eini, 3)
-            self.window = round(self.Eupp - self.Elow, 3)
-            self.lowwindow = round(self.Eini - self.Elow, 3)
-            self.uppdp = round(self.uppwindow * self.osf / self.sr)
-            self.dp = round(self.window * self.osf / self.sr)
-            self.lowdp = round(self.lowwindow * self.osf / self.sr)
-            self.tmax = round(self.ns * (self.uppwindow + self.window + self.lowwindow) / self.sr, 6)
-            self.dt = round((1 / self.osf), 9)
-
+            
             '''INDEX'''
-            self.index = np.arange(0, round((self.tmax + self.dt) / self.dt), 1, dtype = np.int32)
+            self.index = np.arange(0, round((self.tmax + self.dt) / self.dt), 1)
         
             '''TIME'''
-            self.t = self.index * self.dt
+            self.t = np.round(self.index * self.dt, 9)
             
-            '''POTENTIAL WITH POSITIVE SCAN DIRECTION'''
+            '''POTENTIAL FOR POSITIVE SCAN DIRECTION'''
             if self.dE > 0:
                 self.E = np.array([self.Eini])
                 for ix in range(0, self.ns):
-                    self.E = np.append(self.E, np.round(np.linspace(self.Eini + (self.window / self.dp), self.Eupp, self.uppdp, endpoint = True, dtype = np.float32), 6))
-                    self.E = np.append(self.E, np.round(np.linspace(self.Eupp - (self.window / self.dp), self.Elow, self.dp, endpoint = True, dtype = np.float32), 6))
-                    self.E = np.append(self.E, np.round(np.linspace(self.Elow + (self.window / self.dp), self.Eini, self.lowdp, endpoint = True, dtype = np.float32), 6))
+                    self.E = np.append(self.E, np.round(np.linspace(self.Eini + (self.window / self.dp), self.Eupp, self.udp, endpoint = True), 9))
+                    self.E = np.append(self.E, np.round(np.linspace(self.Eupp - (self.window / self.dp), self.Elow, self.dp, endpoint = True), 9))
+                    self.E = np.append(self.E, np.round(np.linspace(self.Elow + (self.window / self.dp), self.Eini, self.ldp, endpoint = True), 9))
 
-            '''POTENTIAL WITH NEGATIVE SCAN DIRECTION'''
+            '''POTENTIAL FOR NEGATIVE SCAN DIRECTION'''
             if self.dE < 0:
                 self.E = np.array([self.Eini])
                 for ix in range(0, self.ns):
-                    self.E = np.append(self.E, np.round(np.linspace(self.Eini - (self.window / self.dp), self.Elow, self.lowdp, endpoint = True, dtype = np.float32), 6))
-                    self.E = np.append(self.E, np.round(np.linspace(self.Elow + (self.window / self.dp), self.Eupp, self.dp, endpoint = True, dtype = np.float32), 6))
-                    self.E = np.append(self.E, np.round(np.linspace(self.Eupp + (self.window / self.dp), self.Eini, self.uppdp, endpoint = True, dtype = np.float32), 6))
+                    self.E = np.append(self.E, np.round(np.linspace(self.Eini - (self.window / self.dp), self.Elow, self.ldp, endpoint = True), 9))
+                    self.E = np.append(self.E, np.round(np.linspace(self.Elow + (self.window / self.dp), self.Eupp, self.dp, endpoint = True), 9))
+                    self.E = np.append(self.E, np.round(np.linspace(self.Eupp + (self.window / self.dp), self.Eini, self.udp, endpoint = True), 9))
         
-
-        '''PLOTTING WAVEFORM'''
-        self.tPLOT = self.t
-        self.EPLOT = self.E
-
 
         '''EXPORTED WAVEFORM'''
         self.indexWF = self.index
@@ -225,74 +234,66 @@ class CyclicLinearVoltammetry(Waveform):
 
       
 class CyclicStaircaseVoltammetry(CyclicLinearVoltammetry):
-    '''Parent class for all waveforms composed of both steps and sweeps'''
+
+    '''Creates the waveform for a cyclic staircase voltammetry procedure \n
+    Requires: \n
+    Eini - the initial potential (in V) \n
+    Eupp - the upper vertex potential (in V) \n
+    Elow - the lower vertex potential (in V) \n
+    dE - the step size (in V) \n
+    sr - the scan rate (in V/s) \n
+    ns - the number of scans \n
+    osf - the oscilloscope sampling frequency (in Sa/s)
+    '''
+
     def __init__(self, Eini, Eupp, Elow, dE, sr, ns, osf):
         super().__init__(Eini, Eupp, Elow, dE, sr, ns, osf)
 
         self.type = 'staircase'
         self.label = 'CSV'
-
-        '''STARTING FROM LOWER VERTEX POTENTIAL''' 
-        if self.Eini == self.Elow:                
-            self.dp = round(np.abs(self.window / self.dE))            
-            
-            '''POTENTIAL'''
-            self.E = np.array([self.Eini])
-            for ix in range(0, self.ns):
-                self.E = np.append(self.E, np.linspace(self.Eini + self.dE, self.Eupp, self.dp, endpoint = True, dtype = np.float32))
-                self.E = np.append(self.E, np.linspace(self.Eupp - self.dE, self.Eini, self.dp, endpoint = True, dtype = np.float32))
-            self.E = np.round(self.E, 6)
-
-    
-        '''STARTING FROM UPPER VERTEX POTENTIAL'''
-        if self.Eini == self.Eupp:     
-            self.dp = round(np.abs(self.window / self.dE))
-                    
-            '''POTENTIAL'''
-            self.E = np.array([self.Eini])
-            for ix in range(0, self.ns):
-                self.E = np.append(self.E, np.linspace(self.Eini + self.dE, self.Elow, self.dp, endpoint = True, dtype = np.float32))
-                self.E = np.append(self.E, np.linspace(self.Elow - self.dE, self.Eini, self.dp, endpoint = True, dtype = np.float32))
-            self.E = np.round(self.E, 6)
-
-
-        '''STARTING IN BETWEEN VERTEX POTENTIALS'''
-        if self.Elow < self.Eini < self.Eupp:        
-            self.uppdp = round(np.abs(self.uppwindow / self.dE))
-            self.dp = round(np.abs(self.window / self.dE))
-            self.lowdp = round(np.abs(self.lowwindow / self.dE))
-            
-            '''POTENTIAL WITH POSITIVE SCAN DIRECTION'''
-            if self.dE > 0:
-                self.E = np.array([self.Eini])
-                for ix in range(0, self.ns):
-                    self.E = np.append(self.E, np.linspace(self.Eini + self.dE, self.Eupp, self.uppdp, endpoint = True, dtype = np.float32))
-                    self.E = np.append(self.E, np.linspace(self.Eupp - self.dE, self.Elow, self.dp, endpoint = True, dtype = np.float32))
-                    self.E = np.append(self.E, np.linspace(self.Elow + self.dE, self.Eini, self.lowdp, endpoint = True, dtype = np.float32))
-
-
-            '''POTENTIAL WITH NEGATIVE SCAN DIRECTION'''
-            if self.dE < 0:
-                self.E = np.array([self.Eini])
-                for ix in range(0, self.ns):
-                    self.E = np.append(self.E, np.linspace(self.Eini - self.dE, self.Elow, self.lowdp, endpoint = True, dtype = np.float32))
-                    self.E = np.append(self.E, np.linspace(self.Elow + self.dE, self.Eupp, self.dp, endpoint = True, dtype = np.float32))
-                    self.E = np.append(self.E, np.linspace(self.Eupp + self.dE, self.Eini, self.uppdp, endpoint = True, dtype = np.float32))
-            
-        
+                      
         '''EXPORTED WAVEFORM'''
-        self.indexWF = np.arange(0, round((2 * self.dp + 1) * self.interval), 1, dtype = np.int32)
+        self.indexWF = np.arange(0, round((self.tmax + (self.dE/self.sr)) / self.dt) + (2 * self.steps + 1), 1)
+        
         self.tWF = np.array([])
-        for ix in range(0, 2 * self.dp + 1):
-            if ix == 0:
-                self.tWF = np.append(self.tWF, self.index[ix * self.interval: (ix + 1) * self.interval] * self.dt)
-            else:
-                self.tWF = np.append(self.tWF, self.index[ix * self.interval: (ix + 1) * self.interval] * self.dt)
-        self.EWF = np.array([])
-        for ix in self.E:
-            self.EWF = np.append(self.EWF, np.ones(self.interval) * ix)
+        for ix in range(0, 2 * self.ns * self.steps + 1):
+            self.tWF = np.append(self.tWF, np.linspace(0, self.dt * self.interval, self.interval + 1) + ix * self.dt * self.interval)
+        
+        self.EWF = np.ones(self.interval + 1) * self.Eini
+        if self.Eini == self.Elow:                
+            for ix in range(0, self.ns):
+                for iy in np.round(np.linspace(self.Eini + self.dE, self.Eupp, self.steps, endpoint = True), 6):
+                    self.EWF = np.append(self.EWF, np.ones(self.interval + 1) * iy)
+                for iy in np.round(np.linspace(self.Eupp - self.dE, self.Eini, self.steps, endpoint = True), 6):
+                    self.EWF = np.append(self.EWF, np.ones(self.interval + 1) * iy)
+    
+        if self.Eini == self.Eupp:     
+            for ix in range(0, self.ns):
+                for iy in np.round(np.linspace(self.Elow - self.dE, self.Eini, self.steps, endpoint = True), 6):
+                    self.EWF = np.append(self.EWF, np.ones(self.interval + 1) * iy)
+                for iy in np.round(np.linspace(self.Elow - self.dE, self.Eini, self.steps, endpoint = True), 6):
+                    self.EWF = np.append(self.EWF, np.ones(self.interval + 1) * iy)    
 
-        pass
+        if self.Elow < self.Eini < self.Eupp:        
+            if self.dE > 0:
+                for ix in range(0, self.ns):
+                    for iy in np.round(np.linspace(self.Eini + self.dE, self.Eupp, self.usteps, endpoint = True), 6):
+                        self.EWF = np.append(self.EWF, np.ones(self.interval + 1) * iy)
+                    for iy in np.round(np.linspace(self.Eupp - self.dE, self.Elow, self.steps, endpoint = True), 6):
+                        self.EWF = np.append(self.EWF, np.ones(self.interval + 1) * iy)
+                    for iy in np.round(np.linspace(self.Elow + self.dE, self.Eini, self.lsteps, endpoint = True), 6):
+                        self.EWF = np.append(self.EWF, np.ones(self.interval + 1) * iy)
+
+            if self.dE < 0:
+                for ix in range(0, self.ns):
+                    for iy in np.round(np.linspace(self.Eini - self.dE, self.Elow, self.lsteps, endpoint = True), 6):
+                        self.EWF = np.append(self.EWF, np.ones(self.interval + 1) * iy)
+                    for iy in np.round(np.linspace(self.Elow + self.dE, self.Eupp, self.steps, endpoint = True), 6):
+                        self.EWF = np.append(self.EWF, np.ones(self.interval + 1) * iy)
+                    for iy in np.round(np.linspace(self.Eupp + self.dE, self.Eini, self.usteps, endpoint = True), 6):
+                        self.EWF = np.append(self.EWF, np.ones(self.interval + 1) * iy)
+
+
 
 """
 ===================================================================================================
@@ -302,7 +303,6 @@ GENERATING WAVEFORMS FROM MAIN
 
 if __name__ == '__main__': 
         
-     
     '''1. MAKE A /DATA FOLDER''' 
     cwd = os.getcwd()
 
@@ -318,15 +318,15 @@ if __name__ == '__main__':
     start = time.time()  
 
     '''3. DESCRIBE THE WAVEFORM'''
-    #wf = CyclicLinearVoltammetry(Eini = 0, Eupp = 0.5, Elow = 0, dE = 0.002, sr = 0.5, ns = 1, osf = None)
-    wf = CyclicStaircaseVoltammetry(Eini = 0, Eupp = 0.5, Elow = 0, dE = 0.002, sr = 0.5, ns = 1, osf = None)
+    #shape = CyclicLinearVoltammetry(Eini = 0.0, Eupp = 0.5, Elow = -0.5, dE = 0.002, sr = 0.5, ns = 1, osf = None)
+    shape = CyclicStaircaseVoltammetry(Eini = 0.0, Eupp = 0.5, Elow = -0.5, dE = 0.002, sr = 0.5, ns = 1, osf = None)
     
-    '''4. DEFINE THE END TIME'''
+    '''4. SAVE THE DATA'''
+    filepath = f'{cwd}/data/{time.strftime("%Y-%m-%d %H-%M-%S")} {shape.label} waveform.txt'
+    with open(filepath, 'w') as file:
+        for ix, iy, iz in shape.output():
+            file.write(str(ix) + ',' + str(iy) + ',' + str(iz) + '\n')
+
+    '''5. DEFINE THE END TIME'''
     end = time.time()
     print(f'The waveform took {end-start} seconds to generate')
-
-    '''5. SAVE THE DATA'''
-    filepath = f'{cwd}/data/{time.strftime("%Y-%m-%d %H-%M-%S")} {wf.label} waveform.txt'
-    with open(filepath, 'w') as file:
-        for ix, iy, iz in wf.output():
-            file.write(str(ix) + ',' + str(iy) + ',' + str(iz) + '\n')
