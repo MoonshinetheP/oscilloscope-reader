@@ -111,11 +111,11 @@ start = time.time()
 shape = wf.CyclicStaircaseVoltammetry(Eini = -0.3, Eupp = 0.85, Elow = -0.65, dE = 0.002, sr = 0.5, ns = 1, osf = 2000000)
 
 '''4. EITHER OPEN A REAL DATA FILE OR A SIMULATED DATA FILE'''
-#data = fo.Oscilloscope(filedialog.askopenfilename(), cf = 0.000012)
-data = sim.Capacitance(shape, Cd = 0.000050, Ru = 250)
+data = fo.Oscilloscope(filedialog.askopenfilename(), cf = 0.000012)
+#data = sim.Capacitance(shape, Cd = 0.000050, Ru = 250)
 
 '''5. PERFORM ANALYSIS ON THE DATA FILE'''
-analysis = op.Operations(shape, data, MA = False, window = 50000, step = 1000, CS = False, alpha = 0.5)
+analysis = op.Operations(shape, data, MA = False, window = 50000, step = 1000, CS = True, alpha = 0.9)
 
 '''6. VISUALISE THE ANALYSIS'''
 plt.Plotter(shape, analysis, display = True, save = True)
