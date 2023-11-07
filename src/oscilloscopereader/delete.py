@@ -32,7 +32,6 @@ oscilloscope-reader package.
 
 How to use this file:
     
-In order to use this file:
     1. Scroll down the the bottom of the file, to the 'DELETING DATA FROM MAIN' section.
     2. In the instance of the Eraser class, change the Boolean operator for the folders you want
        to empty to True
