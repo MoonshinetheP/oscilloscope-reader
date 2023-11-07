@@ -60,7 +60,7 @@ class Eraser:
         self.analysis = [analysis, '/analysis']     # initialised parameter with the analysis Boolean and the corresponding /analysis directory string
         self.plots = [plots, '/plots']      # initialised parameter with the plots Boolean and the corresponding /plots directory string
         
-        '''PARAMETER DEFINITION'''
+        '''PARAMETER DEFINITIONS'''
         cwd = os.getcwd()       # finds the current working directory
 
         '''FILE DELETION'''
