@@ -55,12 +55,15 @@ class Eraser:
 
     def __init__(self, data = False, analysis = False, plots = False):
         
+        '''PARAMETER INITIALISATION'''
         self.data = [data, '/data']     # initialised parameter with the data Boolean and the corresponding /data directory string
         self.analysis = [analysis, '/analysis']     # initialised parameter with the analysis Boolean and the corresponding /analysis directory string
         self.plots = [plots, '/plots']      # initialised parameter with the plots Boolean and the corresponding /plots directory string
         
+        '''PARAMETER DEFINITION'''
         cwd = os.getcwd()       # finds the current working directory
 
+        '''FILE DELETION'''
         for ix in (self.data, self.analysis, self.plots):       # loops through all intialised parameters
             if ix[0] == True:       # checks whether the first part of the parameter is True
                 try:

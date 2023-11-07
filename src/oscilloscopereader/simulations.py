@@ -121,17 +121,21 @@ class Capacitance:
         
         self.i = np.array([0])      # creates a current array containing the initial current value at rest potential (0)
         
+        '''STARTING FROM LOWER VERTEX POTENTIAL'''
         if self.Eini == self.Elow:      # activates in cases where the initial potential is equal to the lower vertex potential
             for iy in range(0, self.ns):        # loops through the number of scans
                 self.i = np.append(self.i, self.sr * self.Cd * (1 - np.exp((-self.shape.t[:self.shape.dp]) / (self.Ru * self.Cd))))     # appends the current from the positive scan direction portion of the potential window to the current array
                 self.i = np.append(self.i, -self.sr * self.Cd * (1 - np.exp((-self.shape.t[:self.shape.dp]) / (self.Ru * self.Cd))))        # appends the current from the negative scan direction portion of the potential window to the current array
         
+        '''STARTING FROM UPPER VERTEX POTENTIAL'''        
         if self.Eini == self.Eupp:      # activates in cases where the initial potential is equal to the upper vertex potential
             for iy in range(0, self.ns):        # loops through the number of scans
                 self.i = np.append(self.i, -self.sr * self.Cd * (1 - np.exp((-self.shape.t[:self.shape.dp]) / (self.Ru * self.Cd))))        # appends the current from the negative scan direction portion of the potential window to the current array
                 self.i = np.append(self.i, self.sr * self.Cd * (1 - np.exp((-self.shape.t[:self.shape.dp]) / (self.Ru * self.Cd))))     # appends the current from the positive scan direction portion of the potential window to the current array
         
+        '''STARTING IN BETWEEN VERTEX POTENTIALS'''
         if self.Elow < self.Eini < self.Eupp:      # activates in cases where the initial potential is between the lower vertexpotential and the upper vertex potential
+            '''POSITIVE SCAN DIRECTION'''
             if self.dE > 0:      # activates in cases where the step size is positive
                 for iy in range(0, self.ns):        # loops through the number of scans
                     if iy == 0:        # for the first scan
@@ -141,7 +145,7 @@ class Capacitance:
                         self.i = np.append(self.i, self.sr * self.Cd * (1 - np.exp((-self.shape.t[:self.shape.dp]) / (self.Ru * self.Cd))))     # appends the current from the positive scan direction portion of the potential window to the current array
                         self.i = np.append(self.i, -self.sr * self.Cd * (1 - np.exp((-self.shape.t[:self.shape.dp]) / (self.Ru * self.Cd))))        # appends the current from the negative scan direction portion of the potential window to the current array
                 self.i = np.append(self.i, self.sr * self.Cd * (1 - np.exp((-self.shape.t[:self.shape.ldp]) / (self.Ru * self.Cd))))        # appends the current from the final positive scan direction portion of the lower partial potential window to the current array
-
+            '''NEGATIVE SCAN DIRECTION'''
             if self.dE < 0:      # activates in cases where the step size is negative
                 for iy in range(0, self.ns):        # loops through the number of scans
                     if iy == 0:        # for the first scan
@@ -165,6 +169,7 @@ class Capacitance:
         self.iupp = np.zeros(self.shape.udp)        # creates an empty array to hold current from the upper partial potential window
         self.ilow = np.zeros(self.shape.ldp)        # creates an empty array to hold current from the lower partial potential window  
 
+        '''STARTING FROM LOWER VERTEX POTENTIAL'''
         if self.Eini == self.Elow:      # activates in cases where the initial potential is equal to the lower vertex potential
             for ix in range(0, self.ns):        # loops through the number of scans
                 for iy in range(0, self.shape.steps):       # loops through the number of steps in the potential window
@@ -177,7 +182,8 @@ class Capacitance:
                 self.iplus = np.zeros(self.shape.dp)        # empties the array to hold current from the positive scan direction portion of the potential window
                 self.i = np.append(self.i, self.iminus)     # appends the current from the negative scan direction portion of the potential window to the current array
                 self.iminus = np.zeros(self.shape.dp)       # empties the array to hold current from the negative scan direction portion of the potential window
-
+        
+        '''STARTING FROM UPPER VERTEX POTENTIAL'''
         if self.Eini == self.Eupp:      # activates in cases where the initial potential is equal to the upper vertex potential
             for ix in range(0, self.ns):        # loops through the number of scans
                 for iy in range(0, self.shape.steps):       # loops through the number of steps in the potential window
@@ -191,7 +197,10 @@ class Capacitance:
                 self.i = np.append(self.i, self.iplus)      # appends the current from the positive scan direction portion of the potential window to the current array
                 self.iplus = np.zeros(self.shape.dp)        # empties the array to hold current from the positive scan direction portion of the potential window 
 
+        '''STARTING IN BETWEEN VERTEX POTENTIALS'''
         if self.Elow < self.Eini < self.Eupp:       # activates in cases where the initial potential is in between the lower vertex potential and the upper vertex potential
+            
+            '''POSITIVE SCAN DIRECTION'''
             if self.dE > 0:      # activates in cases where the step size is positive
                 for ix in range(0, self.ns):        # loops through the number of scans
                     if ix == 0:       # for the first scan
@@ -219,7 +228,8 @@ class Capacitance:
                     space = int(iz * self.shape.interval)       # calulates the number of sampling points in the steps for which current has already been calculated
                     self.ilow[space:] = np.add(self.ilow[space:], (self.dE/self.Ru) * np.exp((-self.shape.t[:self.shape.ldp - space]) / (self.Ru * self.Cd)))       # calculates current from this step for the remainder of the lower partial potential window and buffers the start with a blank array   
                 self.i = np.append(self.i, self.ilow)       # appends the current from the final positive scan direction portion of the lower partial potential window to the current array
-
+            
+            '''NEGATIVE SCAN DIRECTION'''
             if self.dE < 0:      # activates in cases where the step size is positive
                 for ix in range(0, self.ns):        # loops through the number of scans
                     if ix == 0:       # for the first scan

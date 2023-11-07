@@ -53,16 +53,18 @@ class Oscilloscope:
 
     def __init__(self, file, cf):
 
+        '''PARAMETER INITIALISATION'''
         self.label = 'imported'      # label for use in operations.py
 
         self.file = file        # location of the oscilloscope file which has been selected for analysis
         self.cf = cf        # conversion factor of voltage-to-current defined by the user for the potentiostat/settings used
 
-        '''ERROR MANAGEMENT'''
+        '''DATATYPE ERRORS'''
         if isinstance(self.cf, (float)) is False:       # checks that the conversion factor is a float value
             print('\n' + 'An invalid datatype was used for the conversion factor. Enter a float value.' + '\n')
             sys.exit()
-
+        
+        '''DATA VALUE ERRORS'''
         if self.cf <= 0:        # checks that the conversion factor is a positive non-zero value
             print('\n' + 'Conversion factor must be a postive non-zero value.' + '\n')
             sys.exit()
