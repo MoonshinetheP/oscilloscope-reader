@@ -46,6 +46,14 @@ import os
 
 
 class Eraser:
+
+    '''Deletes all items from the selected folders \n
+    
+    Requires: \n
+    data - a True or False option for whether items in the /data folder are deleted or not \n
+    analysis - a True or False option for whether items in the /analysis folder are deleted or not \n
+    plots - a True or False option for whether items in the /plots folder are deleted or not'''
+
     def __init__(self, data = False, analysis = False, plots = False):
         
         self.data = [data, '/data']     # initialised parameter with the data Boolean and the corresponding /data directory string
