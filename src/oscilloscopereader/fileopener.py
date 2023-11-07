@@ -71,5 +71,6 @@ class Oscilloscope:
         try:
             df = pd.read_csv(self.file, header = 1, low_memory = False)     # opens the .csv oscilloscope file into a pandas dataframe without the header and with full detail
             self.i = df.to_numpy().astype(float)[:,1]       # converts the pandas dataframe to a numpy filled with float values
+            self.i *= -self.cf      # modifies the array using the conversion factor
         except:
             raise       # raises an error if the .csv file was not readable for any reason
