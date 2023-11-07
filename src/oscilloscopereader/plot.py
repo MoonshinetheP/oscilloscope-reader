@@ -82,7 +82,7 @@ class Plotter:
 
         '''PLOT GENERATION & MANAGEMENT '''
         if self.save == True:
-            plt.savefig(f'{os.getcwd()}/plots/{time.strftime("%Y-%m-%d %H-%M-%S")} {analysis.input.type} {shape.label} data with {analysis.method}.png')      # saves the figure as a .png image
+            plt.savefig(f'{os.getcwd()}/plots/{time.strftime("%Y-%m-%d %H-%M-%S")} {analysis.data.label} {shape.label} data with {analysis.method}.png')      # saves the figure as a .png image
         
         if self.display == True:
             plt.show()      # displays the figure
