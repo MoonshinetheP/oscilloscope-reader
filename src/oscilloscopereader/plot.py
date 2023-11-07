@@ -76,7 +76,7 @@ class Plotter:
         ax1.set_ylabel('E / V', labelpad = 5, fontsize = 15)        # defines the y-axis labe and settings of the left-hand subplot
 
         ax2.set_xlim(np.amin(self.analysis.E) - (0.1 * (np.amax(self.analysis.E) - np.amin(self.analysis.E))), np.amax(self.analysis.E) + (0.1 * (np.amax(self.analysis.E) - np.amin(self.analysis.E))))        # sets the x-axis of the right-hand subplot to +/- 10% of the oscilloscope data's potential range
-        ax2.set_ylim(np.amin(self.analysis.i) - (0.1 * (np.amax(self.analysis.i) - np.amin(self.analysis.i))), np.amax(self.analysis.i) + (0.1 * (np.amax(self.analysis.i) - np.amin(self.analysis.i))))        # sets the y-axis of the right-hand subplot to +/- 10% of the oscilloscope data's current range
+        ax2.set_ylim(np.nanmin(self.analysis.i) - (0.1 * (np.nanmax(self.analysis.i) - np.nanmin(self.analysis.i))), np.nanmax(self.analysis.i) + (0.1 * (np.nanmax(self.analysis.i) - np.nanmin(self.analysis.i))))        # sets the y-axis of the right-hand subplot to +/- 10% of the oscilloscope data's current range
         ax2.set_title('i vs. E', pad = 15, fontsize = 20)       # defines the title and settings of the right-hand subplot
         ax2.set_xlabel('E / V', labelpad = 5, fontsize = 15)        # defines the x-axis label and settings of the right-hand subplot 
         ax2.set_ylabel('i / A', labelpad = 5, fontsize = 15)        # defines the y-axis label and settings of the right-hand subplot
