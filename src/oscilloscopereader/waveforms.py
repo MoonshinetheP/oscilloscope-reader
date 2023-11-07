@@ -184,6 +184,7 @@ class Waveform:
 
     def output(self):
         '''Returns the waveform for checking or data processing purposes'''
+        
         zipped = zip(self.indexWF, self.tWF, self.EWF)      # zipped array containing waveform data
         return zipped
 
