@@ -168,8 +168,8 @@ class Operations:
             a += self.step
 
         self.index = self.shape.index
-        self.E = self.E[::self.step]
-        self.i = self.i[:self.E.size]
+        self.E = self.E[::self.step][:self.i.size]
+        self.i = self.i[:self.E.size + 1]
         
 
     def CurrentSampling(self):
@@ -188,7 +188,7 @@ class Operations:
         
         self.index = self.shape.index
         self.E = self.E[::self.shape.interval]
-        self.i = self.i
+        self.i = self.i[:self.E.size + 1]
         
     
     def output(self):

@@ -346,8 +346,8 @@ if __name__ == '__main__':
     start = time.time()  
 
     '''3. DESCRIBE THE WAVEFORM'''
-    #shape = CyclicLinearVoltammetry(Eini = 0.0, Eupp = 0.5, Elow = -0.5, dE = 0.002, sr = 0.5, ns = 1, osf = 40)
-    shape = CyclicStaircaseVoltammetry(Eini = 0.0, Eupp = 0.5, Elow = -0.5, dE = 0.002, sr = 0.5, ns = 1, osf = 40)
+    #shape = CyclicLinearVoltammetry(Eini = 0.0, Eupp = 0.5, Elow = -0.5, dE = 0.002, sr = 0.5, ns = 1, osf = None)
+    shape = CyclicStaircaseVoltammetry(Eini = 0.0, Eupp = 0.5, Elow = -0.5, dE = 0.002, sr = 0.5, ns = 1, osf = None)
     
     '''4. SAVE THE DATA'''
     filepath = f'{cwd}/data/{time.strftime("%Y-%m-%d %H-%M-%S")} {shape.label} waveform.txt'
