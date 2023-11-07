@@ -100,10 +100,10 @@ class Capacitance:
             sys.exit()
 
         '''DATA VALUE ERRORS'''
-        if self.Cd > 0:      # checks that the given double layer capacitance is greater than 0
+        if self.Cd <= 0:      # checks that the given double layer capacitance is greater than 0
             print('\n' + 'Double layer capacitance must be a positive non-zero value' + '\n')
             sys.exit()
-        if self.Ru > 0:       #checks that the given uncompensated resistance is greater than 0
+        if self.Ru <= 0:       # checks that the given uncompensated resistance is greater than 0
             print('\n' + 'Uncompensated resistnace must be a positive non-zero value' + '\n')
             sys.exit() 
 
