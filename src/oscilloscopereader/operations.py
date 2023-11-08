@@ -155,14 +155,14 @@ class Operations:
             self.changes = np.diff(self.values)     # finds the change in current between two adjacent peaks
             for iz in self.changes:     # loops through the changes
                 if iz >= np.abs(self.values[1]):        # checks if the change between two adjacent peaks is more positive than the height of a single peak
-                    self.lv = int(self.peaks[np.where(self.changes == iz)[0][0] + 1])       # assigns the position of this change to the lower vertex potential
+                    self.lv = int(self.peaks[np.where(self.changes == iz)[0][0]])       # assigns the position of this change to the lower vertex potential
                     if self.shape.dE > 0:       # activates when step size is positive
                             self.E = np.concatenate((self.shape.E[self.shape.udp + self.shape.dp - self.lv: ], self.shape.E[:self.shape.udp + self.shape.dp -self.lv]))     # and reorganises the imported potential waveform to fit the data 
                     elif self.shape.dE <0:      # activates when step size is negative
                             self.E = np.concatenate((self.shape.E[self.shape.ldp - self.lv: ], self.shape.E[:self.shape.ldp - self.lv]))        # and reorganises the imported potential waveform to fit the data 
                     break       # breaks the loop,because the other vertex potential is not needed
                 if iz <= -np.abs(self.values[1]):         # checks if the change between two adjacent peaks is more negative than the negative height of a single peak
-                    self.uv = int(self.peaks[np.where(self.changes == iz)[0][0] + 1])       # assigns the position of this change to the upper vertex potential
+                    self.uv = int(self.peaks[np.where(self.changes == iz)[0][0]])       # assigns the position of this change to the upper vertex potential
                     if self.shape.dE > 0:       # activates when step size is positive
                             self.E = np.concatenate((self.shape.E[self.shape.udp - self.uv: ], self.shape.E[:self.shape.udp - self.uv]))        # and reorganises the imported potential waveform to fit the data 
                     elif self.shape.dE <0:      # activates when step size is negative
@@ -203,7 +203,7 @@ class Operations:
         '''Isolates each interval and performs an averaging operation in a range around a certain \n
            fraction of the interval'''
         
-        self.method = f'current sampling analysis using a sampling window of {round(self.range * 100)} % centered at{round(self.center * 100)} %'       #label for file naming
+        self.method = f'current sampling analysis using a sampling window of {round(self.range * 100)}% centered at {round(self.center * 100)}%'       #label for file naming
 
         self.i = np.array([])       # empty array to contain the current
         for ix in range(0, self.peaks.size):        # loops through the size of the peaks array
