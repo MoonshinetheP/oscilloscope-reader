@@ -138,14 +138,15 @@ class Operations:
         while ix < (self.data.i.size - self.shape.interval + 1):
             self.position = np.argmax(np.abs(self.data.i[ix : ix + self.shape.interval])) + ix
             if ix == 0:
-                self.peaks = np.append(self.peaks, self.position)
+                self.peaks = np.append(self.peaks, int(self.position))
             elif self.position - self.peaks[-1] > 1.5 * self.shape.interval:
-                self.peaks = np.append(self.peaks, ix + (self.position - self.peaks[-1]) / 2)
-                self.peaks = np.append(self.peaks, self.position)
+                self.lost = np.argmax(np.abs(self.data.i[int(self.peaks[-1] + 0.5 * self.shape.interval) : int(self.position - 0.5 * self.shape.interval)])) + int(0.5 * self.shape.interval + self.peaks[-1])
+                self.peaks = np.append(self.peaks, int(self.lost))
+                self.peaks = np.append(self.peaks, int(self.position))
             elif self.position - self.peaks[-1] < 0.5 * self.shape.interval:
                 pass
             else:
-                self.peaks = np.append(self.peaks, self.position)
+                self.peaks = np.append(self.peaks, int(self.position))
             ix += self.shape.interval
 
         '''FINDING PEAK VALUES'''
@@ -159,14 +160,14 @@ class Operations:
             self.spacing = np.diff(self.values)
             for iz in self.spacing:
                 if iz >= np.abs(self.values[1]):
-                    self.lv = int(self.peaks[np.where(self.spacing == iz)[0][0]])
+                    self.lv = int(self.peaks[np.where(self.spacing == iz)[0][0] + 1])
                     if self.shape.dE > 0:
                             self.E = np.concatenate((self.shape.E[self.shape.udp + self.shape.dp - self.lv: ], self.shape.E[:self.shape.udp + self.shape.dp -self.lv]))
                     elif self.shape.dE <0:
                             self.E = np.concatenate((self.shape.E[self.shape.ldp - self.lv: ], self.shape.E[:self.shape.ldp - self.lv]))
                     break
                 elif iz <= -np.abs(self.values[1]):
-                    self.uv = int(self.peaks[np.where(self.spacing == iz)[0][0]])
+                    self.uv = int(self.peaks[np.where(self.spacing == iz)[0][0] + 1])
                     if self.shape.dE > 0:
                             self.E = np.concatenate((self.shape.E[self.shape.udp - self.uv: ], self.shape.E[:self.shape.udp - self.uv]))
                     elif self.shape.dE <0:
@@ -206,7 +207,7 @@ class Operations:
         '''Returns the current average of each potential step in the oscilloscope data in the form of voltage (simplified) vs. averaged current'''
         
         self.method = f'current sampling analysis using an alpha of {self.alpha}'       #label for file naming
-
+        
         self.i = np.array([])
         for ix in range(0, self.peaks.size):
             try:
@@ -218,7 +219,7 @@ class Operations:
             self.i = np.append(self.i, sampled)
         
         self.index = self.shape.index       # indexing array borrowed from waveforms.py (zipping with E and i cuts this automatically)
-        self.E = self.E[::self.shape.interval][:self.i.size]
+        self.E = np.append(self.E[self.peaks.astype(int)[ : 2 * self.shape.ns * self.shape.steps]], self.E[-1])
         self.i = self.i[:self.E.size]
         
     
