@@ -24,275 +24,308 @@ Filename:           waveforms.py
 
 Description:
 
- 
+This file contains the code used by the oscilloscope-reader package to generate potential waveforms
+which are then used in simulations.py to prepare simulated data and in operations.py and plot.py to 
+accompany oscilloscope data. 
 
 ===================================================================================================
 
 How to use this file:
     
+Whilst this file is primarily used by other files, it can also be used on its own in order to 
+prepare potential waveforms for data processing, educational purposes, other simulations, etc.
 
+In order to use this file:
+    1. Scroll down the the bottom of the file, to the 'GENERATING WAVEFORMS FROM MAIN' section.
+    2. In the third point of this section, choose the waveform you want to generate, commenting out
+       the other waveform
+    3. Edit the parameters of this waveform, keeping the following rules in mind
+        a) If you want a scan going in the negative direction, use a negative dE value. 
+        b) Negative dE values cannot be used when the start potential is the lower vertex potential
+        c) Positive dE values cannot be used when the start potential is the upper vertex potential
+        d) An oscilloscope sampling frequency (osf) of None gives a data point for each dE value
+        e) Increasing the osf will increase the number of data points for each dE
+        f) The osf cannot be set below the natural sampling frequency (given by sr/dE)
+    4. Run the python file
+
+The potential waveform data will be saved in a .txt file in the /data folder of the current working
+directory.
 
 ===================================================================================================
 
-Note:
+Notes:
 
+The CyclicStaircaseVoltammetry class is a child of the CyclicLinearVoltammetry class. This was done 
+because the waveform used in operations.py file is the same for both types of voltammetry (i.e. a 
+linear triangular waveform with the same number of points as measured using an oscilloscope), since 
+plotting vs. a staircase is not possible. The only difference for the child compared to the parent
+is that the waveform exported for checking or plotting needs more preparation in order to show its 
+true staircase form.
 
+The CyclicLinearVoltammetry class is itself a child of the Waveforms class. This parent class
+initialises all of the parameters used by the child and grandchild, checks the parameter types and
+values, then calculates a few other parameters which are used by both children and also other files
+such as simulations.py and operations.py. It also features the function for exporting the waveform
+data from the main of this file.
+
+When using the waveform classes in this file, bear in mind that increasing the oscilloscope
+sampling frequency (i.e. the osf) increases the size of the waveform data and the time required to
+generate the waveform. Since the osf is a fixed rate, selecting slower scan rates will naturally 
+increase the number of points in the final waveform data. Keep this in mind, as it may be more
+efficient to decrease the osf if you want waveform data for a slower scan rate (as you would do 
+when using an oscilloscope). If the value of osf is changed to None, then only one point per dE (or
+two in the case of CyclicStaircaseVoltammetry) will be generated, giving you the simplest possible
+waveform.
 
 ===================================================================================================
 '''
+
 
 import sys
 import os
 import time
 import numpy as np
-
 from errno import EEXIST
 
 
-'''WAVEFORM CLASSES'''
 class Waveform:
-    '''Parent class for cyclic voltammetry waveforms'''
+
+    '''Parent class for cyclic voltammetry waveforms \n
+    Contains the parameter initialisation, error management, parameter calculations, and output function used by all child classes'''
+
     def __init__(self, Eini, Eupp, Elow, dE, sr, ns, osf):
 
-        self.Eini = Eini        # Start potential
-        self.Eupp = Eupp        # Upper vertex potential
-        self.Elow = Elow        # Lower vertex potential
-        self.dE = dE            # Potential step size
-        self.sr = sr            # Scan rate
-        self.ns = ns            # Number of scans
-        self.osf = osf          # Oscilloscope sampling frequency
+        '''PARAMETER INITIALISATION'''
+        self.Eini = Eini        # initial potential (in V)
+        self.Eupp = Eupp        # upper vertex potential (in V)
+        self.Elow = Elow        # lower vertex potential (in V)
+        self.dE = dE        # step size (in V)
+        self.sr = sr        # scan rate (in V/s)
+        self.ns = ns        # number of scans
+        self.osf = osf      # oscilloscope sampling frequency (in Sa/s)
         
         '''DATATYPE ERRORS'''
-        if isinstance(self.Eini, (float, int)) is False:
+        if isinstance(self.Eini, (float, int)) is False:        # checks that the given initial potential is a float or an integer value
             print('\n' + 'An invalid datatype was used for the start potential. Enter either a float or an integer value corresponding to a potential in V.' + '\n')
             sys.exit()
-        if isinstance(self.Eupp, (float, int)) is False:
+        if isinstance(self.Eupp, (float, int)) is False:        # checks that the given upper vertex potential is a float or an integer value
             print('\n' + 'An invalid datatype was used for the upper vertex potential. Enter either a float or an integer value corresponding to a potential in V.' + '\n')
             sys.exit()        
-        if isinstance(self.Elow, (float, int)) is False:
+        if isinstance(self.Elow, (float, int)) is False:        # checks that the given lower vertex potential is a float or an integer value
             print('\n' + 'An invalid datatype was used for the lower vertex potential. Enter either a float or an integer value corresponding to a potential in V.' + '\n')
             sys.exit()      
-        if isinstance(self.dE, (float)) is False:
+        if isinstance(self.dE, (float)) is False:       # checks that the given step size is a float value
             print('\n' + 'An invalid datatype was used for the step potential. Enter a float value corresponding to a potential in V.' + '\n')
             sys.exit()    
-        if isinstance(self.sr, (float, int)) is False:
+        if isinstance(self.sr, (float, int)) is False:      # checks that the given scan rate is a float or an integer value
             print('\n' + 'An invalid datatype was used for the scan rate. Enter a float or an integer value corresponding to the scan rate in V/s.' + '\n')
             sys.exit() 
-        if isinstance(self.ns, (int)) is False:
+        if isinstance(self.ns, (int)) is False:     # checks that the given number of scans is an integer value
             print('\n' + 'An invalid datatype was used for the number of scans. Enter an integer value corresponding to the scan rate in V/s.' + '\n')
             sys.exit() 
-        if isinstance(self.osf, (int, type(None))) is False:
+        if isinstance(self.osf, (int, type(None))) is False:        # checks that the given oscilloscope sampling frequency is an integer value or None
             print('\n' + 'An invalid datatype was used for the oscilloscope sampling rate. Enter an integer value or None.' + '\n')
             sys.exit()
 
         '''DATA VALUE ERRORS'''
-        if self.Eupp == self.Elow:
+        if self.Eupp == self.Elow:      # checks that the potential window is greater than 0
             print('\n' + 'Upper and lower vertex potentials must be different values' + '\n')
             sys.exit()
-        if self.Eupp < self.Elow:
+        if self.Eupp < self.Elow:       #checks that the upper vertex potential is more positive than the lower vertex potential
             print('\n' + 'Upper vertex potential must be greater than lower vertex potential' + '\n')
             sys.exit()  
-        if self.Eini < self.Elow:
+        if self.Eini < self.Elow:       #checks that the initial potential is equal to or more positive than the lower vertex potential
             print('\n' + 'Start potential must be higher than or equal to the lower vertex potential' + '\n')
             sys.exit()
-        if self.Eini > self.Eupp:
+        if self.Eini > self.Eupp:       # checks that the initial potential is equal to or more negative than the upper vertex potential
             print('\n' + 'Start potential must be lower than or equal to the upper vertex potential' + '\n')
             sys.exit()
-        if self.dE == 0:
+        if self.dE == 0:        # checks that step size is not zero        
             print('\n' + 'Step potential must be a non-zero value' + '\n')
             sys.exit()
-        if abs(self.dE) > abs(self.Eupp - self.Elow):
+        if abs(self.dE) > abs(self.Eupp - self.Elow):       # checks that the step size is not greater than the potential window
             print('\n' + 'Step potential must not be greater than the potential window' + '\n')
             sys.exit()
-        if self.Eini == self.Elow and self.dE < 0:
+        if self.Eini == self.Elow and self.dE < 0:      # checks that the step size is not negative when going in an initial positive direction
             print('\n' + 'Step potential must be a positive value for a positive scan direction' + '\n')
             sys.exit()
-        if self.Eini == self.Eupp and self.dE > 0:
+        if self.Eini == self.Eupp and self.dE > 0:      # checks that the step size is not positive when going in an initial negative direction
             print('\n' + 'Step potential must be a negative value for a negative scan direction' + '\n')
             sys.exit()
-        if self.sr <= 0:
+        if self.sr <= 0:        # checks that the scan rate is not 0
             print('\n' + 'Scan rate must be a positive non-zero value' + '\n')
             sys.exit()
-        if self.ns <=0:
+        if self.ns <=0:     #checks that the number of scans is 1 or more
             print('\n' + 'Number of scans must be a positive non-zero value' + '\n')
             sys.exit()
-        if type(self.osf) == int and self.osf < 1:
-            print('\n' + 'Oscilloscope sampling rate must be either between 1 and infinity or set to None' + '\n')
+        if type(self.osf) == int and self.osf < round(np.abs(self.sr / self.dE)):       # checks that an integer osf value is above the natural sampling frequency
+            print('\n' + 'Oscilloscope sampling frequency is set below the natural sampling rate. Set it to None or increase the frequency' + '\n')
             sys.exit() 
-        
-        if self.osf == None:
-            self.osf = round(np.abs(self.sr / self.dE))
 
-        self.interval = round(np.abs(self.dE / self.sr) * self.osf)
+        '''PARAMETER DEFINITIONS'''
+        if self.osf == None:
+            self.osf = round(np.abs(self.sr / self.dE))     # sets the osf to the natural sampling frequency when osf is initially None
+
+        self.interval = round(np.abs(self.dE / self.sr) * self.osf)     # number of sampling points between steps (Sa)
+
+        self.window = round(self.Eupp - self.Elow, 3)       # potential window (in V) rounded to 3 d.p
+        self.dp = round(self.window * self.osf / self.sr)       # number of data points per potential window (in Sa) rounded to 0 d.p
+        self.uwindow = round(self.Eupp - self.Eini, 3)      # upper partial potential window (in V) rounded to 3 d.p
+        self.udp = round(self.uwindow * self.osf / self.sr)       # number of data points per upper partial potential window (in Sa) rounded to 0 d.p
+        self.lwindow = round(self.Eini - self.Elow, 3)      # lower partial potential window (in V) rounded to 3 d.p
+        self.ldp = round(self.lwindow * self.osf / self.sr)       # number of data points per lower partial potential window (in Sa) rounded to 0 d.p
+        
+        self.tmax = round(2 * self.ns * self.window / self.sr, 6)       # end time for potential waveform (in s) rounded to 6 d.p
+        self.dt = round((1 / self.osf), 9)      # interval time between data points (in s) rounded to 9 d.p
+
+        self.steps = round(np.abs(self.window / self.dE))       # number of steps per potential window
+        self.usteps = round(np.abs(self.uwindow / self.dE))     # number of steps per uppwer partial potential window
+        self.lsteps = round(np.abs(self.lwindow / self.dE))     # number of steps per lower partial potential window
+
 
     def output(self):
-        '''Function that returns the waveform for checking or data processing purposes'''
-        zipped = zip(self.indexWF, self.tWF, self.EWF)
+        '''Returns the waveform for checking or data processing purposes'''
+        
+        zipped = zip(self.indexWF, self.tWF, self.EWF)      # zipped array containing waveform data
         return zipped
 
 
+
 class CyclicLinearVoltammetry(Waveform):
-    def __init__(self, Eini, Eupp, Elow, dE, sr, ns, osf):
-        super().__init__(Eini, Eupp, Elow, dE, sr, ns, osf)
-        
-        self.type = 'linear'
-        self.label = 'CV'
 
-        '''STARTING FROM LOWER VERTEX POTENTIAL''' 
-        if self.Eini == self.Elow:                
-            self.window = round(self.Eupp - self.Elow, 3)
-            self.dp = round(self.window * self.osf / self.sr)
-            self.tmax = round(2 * self.ns * self.window / self.sr, 6)
-            self.dt = round((1 / self.osf), 9)
-           
-            '''INDEX'''
-            self.index = np.arange(0, round((self.tmax + self.dt) / self.dt), 1, dtype = np.int32)
-        
-            '''TIME'''
-            self.t = self.index * self.dt 
-            
-            '''POTENTIAL'''
-            self.E = np.array([self.Eini])
-            for ix in range(0, self.ns):
-                self.E = np.append(self.E, np.round(np.linspace(self.Eini + (self.window / self.dp), self.Eupp, self.dp, endpoint = True, dtype = np.float32), 6))
-                self.E = np.append(self.E, np.round(np.linspace(self.Eupp - (self.window / self.dp), self.Eini, self.dp, endpoint = True, dtype = np.float32), 6))
-
+    '''Creates the waveform for a cyclic linear voltammetry procedure \n
+    Requires: \n
+    Eini - initial potential (in V) \n
+    Eupp - upper vertex potential (in V) \n
+    Elow - lower vertex potential (in V) \n
+    dE - step size (in V) \n
+    sr - scan rate (in V/s) \n
+    ns - number of scans \n
+    osf - oscilloscope sampling frequency (in Sa/s)
+    '''
     
-        '''STARTING FROM UPPER VERTEX POTENTIAL'''
-        if self.Eini == self.Eupp:     
-            self.window = round(self.Eupp - self.Elow, 3)
-            self.dp = round(self.window * self.osf / self.sr)
-            self.tmax = round(2 * self.ns * self.window / self.sr, 6)
-            self.dt = round((1 / self.osf), 9)
-
-            '''INDEX'''
-            self.index = np.arange(0, round((self.tmax + self.dt) / self.dt), 1, dtype = np.int32)
+    def __init__(self, Eini, Eupp, Elow, dE, sr, ns, osf):
+        super().__init__(Eini, Eupp, Elow, dE, sr, ns, osf)     # adopts parameters from the Waveform parent class
         
-            '''TIME'''
-            self.t = self.index * self.dt  
-            
-            '''POTENTIAL'''
-            self.E = np.array([self.Eini])
-            for ix in range(0, self.ns):
-                self.E = np.append(self.E, np.round(np.linspace(self.Eini + (self.window / self.dp), self.Elow, self.dp, endpoint = True, dtype = np.float32), 6))
-                self.E = np.append(self.E, np.round(np.linspace(self.Elow - (self.window / self.dp), self.Eini, self.dp, endpoint = True, dtype = np.float32), 6))
+        '''LABELS'''
+        self.type = 'linear'        # label for use in simulations.py
+        self.label = 'CV'       # label for file naming
 
+        '''INDEX'''
+        self.index = np.arange(0, round((self.tmax + self.dt) / self.dt), 1)        # produces a rounded indexing array which starts from 0
+        
+        '''TIME'''
+        self.t = np.round(self.index * self.dt, 9)      # converts the indexing array into a time array (rounded to 9 d.p)
+
+        '''POTENTIAL'''
+        self.E = np.array([self.Eini])      # creates a potential array containing the initial potential
+        
+        '''STARTING FROM LOWER VERTEX POTENTIAL''' 
+        if self.Eini == self.Elow:      # activates in cases where the initial potential is equal to the lower vertex potential                 
+            for ix in range(0, self.ns):        # loops through the number of scans
+                self.E = np.append(self.E, np.round(np.linspace(self.Eini + (self.window / self.dp), self.Eupp, self.dp, endpoint = True), 9))      # adds the positive scan direction portion of the potential window to the potential array (rounded to 9 d.p)
+                self.E = np.append(self.E, np.round(np.linspace(self.Eupp - (self.window / self.dp), self.Eini, self.dp, endpoint = True), 9))      # adds the negtive scan direction portion of the potential window to the potential array (rounded to 9 d.p)
+
+        '''STARTING FROM UPPER VERTEX POTENTIAL'''
+        if self.Eini == self.Eupp:      # activates in cases where the initial potential is equal to the upper vertex potential      
+            for ix in range(0, self.ns):        # loops through the number of scans
+                self.E = np.append(self.E, np.round(np.linspace(self.Eini + (self.window / self.dp), self.Elow, self.dp, endpoint = True), 9))      # adds the negative scan direction portion of the potential window to the potential array (rounded to 9 d.p)
+                self.E = np.append(self.E, np.round(np.linspace(self.Elow - (self.window / self.dp), self.Eini, self.dp, endpoint = True), 9))      # adds the positive scan direction portion of the potential window to the potential array (rounded to 9 d.p)
 
         '''STARTING IN BETWEEN VERTEX POTENTIALS'''
-        if self.Elow < self.Eini < self.Eupp:        
-            self.uppwindow = round(self.Eupp - self.Eini, 3)
-            self.window = round(self.Eupp - self.Elow, 3)
-            self.lowwindow = round(self.Eini - self.Elow, 3)
-            self.uppdp = round(self.uppwindow * self.osf / self.sr)
-            self.dp = round(self.window * self.osf / self.sr)
-            self.lowdp = round(self.lowwindow * self.osf / self.sr)
-            self.tmax = round(self.ns * (self.uppwindow + self.window + self.lowwindow) / self.sr, 6)
-            self.dt = round((1 / self.osf), 9)
+        if self.Elow < self.Eini < self.Eupp:       # activates in cases where the initial potential is between the lower vertex potential and the upper vertex potential  
 
-            '''INDEX'''
-            self.index = np.arange(0, round((self.tmax + self.dt) / self.dt), 1, dtype = np.int32)
-        
-            '''TIME'''
-            self.t = self.index * self.dt
+            '''POSITIVE SCAN DIRECTION'''
+            if self.dE > 0:     # activates in cases where the step potential is postive
+                for ix in range(0, self.ns):        # loops through the number of scans
+                    self.E = np.append(self.E, np.round(np.linspace(self.Eini + (self.window / self.dp), self.Eupp, self.udp, endpoint = True), 9))     # adds the postive scan direction portion of the upper partial potential window to the potential array (rounded to 9 d.p)
+                    self.E = np.append(self.E, np.round(np.linspace(self.Eupp - (self.window / self.dp), self.Elow, self.dp, endpoint = True), 9))      # adds the negative scan direction portion of the potential window to the potential array (rounded to 9 d.p)
+                    self.E = np.append(self.E, np.round(np.linspace(self.Elow + (self.window / self.dp), self.Eini, self.ldp, endpoint = True), 9))     # adds the positive scan direction portion of the lower partial potential window to the potential array (rounded to 9 d.p)
             
-            '''POTENTIAL WITH POSITIVE SCAN DIRECTION'''
-            if self.dE > 0:
-                self.E = np.array([self.Eini])
-                for ix in range(0, self.ns):
-                    self.E = np.append(self.E, np.round(np.linspace(self.Eini + (self.window / self.dp), self.Eupp, self.uppdp, endpoint = True, dtype = np.float32), 6))
-                    self.E = np.append(self.E, np.round(np.linspace(self.Eupp - (self.window / self.dp), self.Elow, self.dp, endpoint = True, dtype = np.float32), 6))
-                    self.E = np.append(self.E, np.round(np.linspace(self.Elow + (self.window / self.dp), self.Eini, self.lowdp, endpoint = True, dtype = np.float32), 6))
-
-            '''POTENTIAL WITH NEGATIVE SCAN DIRECTION'''
-            if self.dE < 0:
-                self.E = np.array([self.Eini])
-                for ix in range(0, self.ns):
-                    self.E = np.append(self.E, np.round(np.linspace(self.Eini - (self.window / self.dp), self.Elow, self.lowdp, endpoint = True, dtype = np.float32), 6))
-                    self.E = np.append(self.E, np.round(np.linspace(self.Elow + (self.window / self.dp), self.Eupp, self.dp, endpoint = True, dtype = np.float32), 6))
-                    self.E = np.append(self.E, np.round(np.linspace(self.Eupp + (self.window / self.dp), self.Eini, self.uppdp, endpoint = True, dtype = np.float32), 6))
+            '''NEGATIVE SCAN DIRECTION'''
+            if self.dE < 0:     # activates in cases where the step potential is negative
+                for ix in range(0, self.ns):        # loops through the number of scans
+                    self.E = np.append(self.E, np.round(np.linspace(self.Eini - (self.window / self.dp), self.Elow, self.ldp, endpoint = True), 9))     # adds the negative scan direction portion of the lower partial potential window to the potential array (rounded to 9 d.p)
+                    self.E = np.append(self.E, np.round(np.linspace(self.Elow + (self.window / self.dp), self.Eupp, self.dp, endpoint = True), 9))      # adds the positrive scan direction portion of the potential window to the potential array (rounded to 9 d.p)
+                    self.E = np.append(self.E, np.round(np.linspace(self.Eupp + (self.window / self.dp), self.Eini, self.udp, endpoint = True), 9))     # adds the negative scan direction portion of the upper partial potential window to the potential array (rounded to 9 d.p)
         
-
-        '''PLOTTING WAVEFORM'''
-        self.tPLOT = self.t
-        self.EPLOT = self.E
-
-
-        '''EXPORTED WAVEFORM'''
-        self.indexWF = self.index
-        self.tWF = self.t
-        self.EWF = self.E
+        self.indexWF = self.index       # exported indexing array
+        self.tWF = self.t       # exported time array
+        self.EWF = self.E       # exported potential array
 
 
       
 class CyclicStaircaseVoltammetry(CyclicLinearVoltammetry):
-    '''Parent class for all waveforms composed of both steps and sweeps'''
+
+    '''Creates the waveform for a cyclic staircase voltammetry procedure \n
+    Requires: \n
+    Eini - the initial potential (in V) \n
+    Eupp - the upper vertex potential (in V) \n
+    Elow - the lower vertex potential (in V) \n
+    dE - the step size (in V) \n
+    sr - the scan rate (in V/s) \n
+    ns - the number of scans \n
+    osf - the oscilloscope sampling frequency (in Sa/s)
+    '''
+
     def __init__(self, Eini, Eupp, Elow, dE, sr, ns, osf):
-        super().__init__(Eini, Eupp, Elow, dE, sr, ns, osf)
+        super().__init__(Eini, Eupp, Elow, dE, sr, ns, osf)     # adopts parameters from the CyclicLinearVoltammetry class
 
-        self.type = 'staircase'
-        self.label = 'CSV'
-
-        '''STARTING FROM LOWER VERTEX POTENTIAL''' 
-        if self.Eini == self.Elow:                
-            self.dp = round(np.abs(self.window / self.dE))            
-            
-            '''POTENTIAL'''
-            self.E = np.array([self.Eini])
-            for ix in range(0, self.ns):
-                self.E = np.append(self.E, np.linspace(self.Eini + self.dE, self.Eupp, self.dp, endpoint = True, dtype = np.float32))
-                self.E = np.append(self.E, np.linspace(self.Eupp - self.dE, self.Eini, self.dp, endpoint = True, dtype = np.float32))
-            self.E = np.round(self.E, 6)
-
-    
-        '''STARTING FROM UPPER VERTEX POTENTIAL'''
-        if self.Eini == self.Eupp:     
-            self.dp = round(np.abs(self.window / self.dE))
-                    
-            '''POTENTIAL'''
-            self.E = np.array([self.Eini])
-            for ix in range(0, self.ns):
-                self.E = np.append(self.E, np.linspace(self.Eini + self.dE, self.Elow, self.dp, endpoint = True, dtype = np.float32))
-                self.E = np.append(self.E, np.linspace(self.Elow - self.dE, self.Eini, self.dp, endpoint = True, dtype = np.float32))
-            self.E = np.round(self.E, 6)
-
-
-        '''STARTING IN BETWEEN VERTEX POTENTIALS'''
-        if self.Elow < self.Eini < self.Eupp:        
-            self.uppdp = round(np.abs(self.uppwindow / self.dE))
-            self.dp = round(np.abs(self.window / self.dE))
-            self.lowdp = round(np.abs(self.lowwindow / self.dE))
-            
-            '''POTENTIAL WITH POSITIVE SCAN DIRECTION'''
-            if self.dE > 0:
-                self.E = np.array([self.Eini])
-                for ix in range(0, self.ns):
-                    self.E = np.append(self.E, np.linspace(self.Eini + self.dE, self.Eupp, self.uppdp, endpoint = True, dtype = np.float32))
-                    self.E = np.append(self.E, np.linspace(self.Eupp - self.dE, self.Elow, self.dp, endpoint = True, dtype = np.float32))
-                    self.E = np.append(self.E, np.linspace(self.Elow + self.dE, self.Eini, self.lowdp, endpoint = True, dtype = np.float32))
-
-
-            '''POTENTIAL WITH NEGATIVE SCAN DIRECTION'''
-            if self.dE < 0:
-                self.E = np.array([self.Eini])
-                for ix in range(0, self.ns):
-                    self.E = np.append(self.E, np.linspace(self.Eini - self.dE, self.Elow, self.lowdp, endpoint = True, dtype = np.float32))
-                    self.E = np.append(self.E, np.linspace(self.Elow + self.dE, self.Eupp, self.dp, endpoint = True, dtype = np.float32))
-                    self.E = np.append(self.E, np.linspace(self.Eupp + self.dE, self.Eini, self.uppdp, endpoint = True, dtype = np.float32))
-            
+        '''LABELS'''
+        self.type = 'staircase'     # label for use in simulations.py
+        self.label = 'CSV'      # label for file naming
+                      
+        '''INDEX'''
+        self.indexWF = np.arange(0, round((self.tmax + (self.dE/self.sr)) / self.dt) + (2 * self.ns * self.steps + 1), 1)     # produces a rounded indexing array which accounts for the additional step at the end of the waveform and for staircase points equal to the total number of steps taken (plus one)
         
-        '''EXPORTED WAVEFORM'''
-        self.indexWF = np.arange(0, round((2 * self.dp + 1) * self.interval), 1, dtype = np.int32)
-        self.tWF = np.array([])
-        for ix in range(0, 2 * self.dp + 1):
-            if ix == 0:
-                self.tWF = np.append(self.tWF, self.index[ix * self.interval: (ix + 1) * self.interval] * self.dt)
-            else:
-                self.tWF = np.append(self.tWF, self.index[ix * self.interval: (ix + 1) * self.interval] * self.dt)
-        self.EWF = np.array([])
-        for ix in self.E:
-            self.EWF = np.append(self.EWF, np.ones(self.interval) * ix)
+        '''TIME'''
+        self.tWF = np.array([])     # creates an empty time array
+        for ix in range(0, 2 * self.ns * self.steps + 1):       # loops through the total number of steps (plus one)
+            self.tWF = np.append(self.tWF, np.linspace(0, self.dt * self.interval, self.interval + 1) + ix * self.dt * self.interval)       # creates a temporary time array for a single step, then adds the step time for the current step and appends the result to the time array (the beginning of each temporary array overlaps with the end of the previous one, making a staircase time array)
+        
+        '''POTENTIAL'''
+        self.EWF = np.ones(self.interval + 1) * self.Eini       # creates an array containing as many elements as the interval sampling points (plus one), all equal to the initial potential
 
-        pass
+        '''STARTING FROM LOWER VERTEX POTENTIAL'''
+        if self.Eini == self.Elow:      # activates in cases where the initial potential is equal to the lower vertex potential                   
+            for ix in range(0, self.ns):        # loops through the number of scans
+                for iy in np.round(np.linspace(self.Eini + self.dE, self.Eupp, self.steps, endpoint = True), 6):        # loops through the positive scan direction portion of the potential window (rounded to 6 d.p)
+                    self.EWF = np.append(self.EWF, np.ones(self.interval + 1) * iy)     # creates an array of each potential with as many elements as the interval sampling points (plus one) and adds it to the potential array
+                for iy in np.round(np.linspace(self.Eupp - self.dE, self.Eini, self.steps, endpoint = True), 6):        # loops through the negative scan direction portion of the potential window (rounded to 9 d.p)
+                    self.EWF = np.append(self.EWF, np.ones(self.interval + 1) * iy)     # creates an array of each potential with as many elements as the interval sampling points (plus one) and adds it to the potential array
+        
+        '''STARTING FROM UPPER VERTEX POTENTIAL'''
+        if self.Eini == self.Eupp:      # activates in cases where the initial potential is equal to the upper vertex potential   
+            for ix in range(0, self.ns):        # loops through the number of scans
+                for iy in np.round(np.linspace(self.Elow - self.dE, self.Eini, self.steps, endpoint = True), 6):        # loops through the negative scan direction portion of the potential window (rounded to 6 d.p)
+                    self.EWF = np.append(self.EWF, np.ones(self.interval + 1) * iy)     # creates an array of each potential with as many elements as the interval sampling points (plus one) and adds it to the potential array
+                for iy in np.round(np.linspace(self.Elow - self.dE, self.Eini, self.steps, endpoint = True), 6):       # loops through the positive scan direction portion of the potential window (rounded to 6 d.p)
+                    self.EWF = np.append(self.EWF, np.ones(self.interval + 1) * iy)     # creates an array of each potential with as many elements as the interval sampling points (plus one) and adds it to the potential array
+        
+        '''STARTING IN BETWEEN VERTEX POTENTIALS'''
+        if self.Elow < self.Eini < self.Eupp:       # activates in cases where the initial potential is between the lower vertex potential and the upper vertex potential        
+            
+            '''POSITIVE SCAN DIRECTION'''
+            if self.dE > 0:     # activates in cases where the step potential is positive   
+                for ix in range(0, self.ns):        # loops through the number of scans
+                    for iy in np.round(np.linspace(self.Eini + self.dE, self.Eupp, self.usteps, endpoint = True), 6):       # loops through the positive scan direction portion of the upper partial potential window (rounded to 6 d.p)
+                        self.EWF = np.append(self.EWF, np.ones(self.interval + 1) * iy)     # creates an array of each potential with as many elements as the interval sampling points (plus one) and adds it to the potential array
+                    for iy in np.round(np.linspace(self.Eupp - self.dE, self.Elow, self.steps, endpoint = True), 6):        # loops through the negative scan direction portion of the potential window (rounded to 6 d.p)
+                        self.EWF = np.append(self.EWF, np.ones(self.interval + 1) * iy)     # creates an array of each potential with as many elements as the interval sampling points (plus one) and adds it to the potential array
+                    for iy in np.round(np.linspace(self.Elow + self.dE, self.Eini, self.lsteps, endpoint = True), 6):       # loops through the positive scan direction portion of the lower partial potential window (rounded to 6 d.p)
+                        self.EWF = np.append(self.EWF, np.ones(self.interval + 1) * iy)     # creates an array of each potential with as many elements as the interval sampling points (plus one) and adds it to the potential array
+            
+            '''NEGATIVE SCAN DIRECTION'''
+            if self.dE < 0:     # activates in cases where the step potential is negative  
+                for ix in range(0, self.ns):        # loops through the number of scans
+                    for iy in np.round(np.linspace(self.Eini - self.dE, self.Elow, self.lsteps, endpoint = True), 6):       # loops through the negative scan direction portion of the lower partial potential window (rounded to 6 d.p)
+                        self.EWF = np.append(self.EWF, np.ones(self.interval + 1) * iy)     # adds the negative scan direction portion of the lower partial potential window to the potential array (rounded to 9 d.p)
+                    for iy in np.round(np.linspace(self.Elow + self.dE, self.Eupp, self.steps, endpoint = True), 6):        # loops through the positive scan direction portion of the potential window (rounded to 6 d.p)
+                        self.EWF = np.append(self.EWF, np.ones(self.interval + 1) * iy)     # adds the negative scan direction portion of the lower partial potential window to the potential array (rounded to 9 d.p)
+                    for iy in np.round(np.linspace(self.Eupp + self.dE, self.Eini, self.usteps, endpoint = True), 6):       # loops through the negative scan direction portion of the upper partial potential window (rounded to 6 d.p)
+                        self.EWF = np.append(self.EWF, np.ones(self.interval + 1) * iy)     # adds the negative scan direction portion of the lower partial potential window to the potential array (rounded to 9 d.p)
+
+
 
 """
 ===================================================================================================
@@ -302,7 +335,6 @@ GENERATING WAVEFORMS FROM MAIN
 
 if __name__ == '__main__': 
         
-     
     '''1. MAKE A /DATA FOLDER''' 
     cwd = os.getcwd()
 
@@ -318,15 +350,15 @@ if __name__ == '__main__':
     start = time.time()  
 
     '''3. DESCRIBE THE WAVEFORM'''
-    #wf = CyclicLinearVoltammetry(Eini = 0, Eupp = 0.5, Elow = 0, dE = 0.002, sr = 0.5, ns = 1, osf = None)
-    wf = CyclicStaircaseVoltammetry(Eini = 0, Eupp = 0.5, Elow = 0, dE = 0.002, sr = 0.5, ns = 1, osf = None)
+    #shape = CyclicLinearVoltammetry(Eini = 0.0, Eupp = 0.5, Elow = -0.5, dE = 0.002, sr = 0.5, ns = 1, osf = None)
+    shape = CyclicStaircaseVoltammetry(Eini = 0.0, Eupp = 0.5, Elow = -0.5, dE = 0.002, sr = 0.5, ns = 1, osf = None)
     
-    '''4. DEFINE THE END TIME'''
+    '''4. SAVE THE DATA'''
+    filepath = f'{cwd}/data/{time.strftime("%Y-%m-%d %H-%M-%S")} {shape.label} waveform.txt'
+    with open(filepath, 'w') as file:
+        for ix, iy, iz in shape.output():
+            file.write(str(ix) + ',' + str(iy) + ',' + str(iz) + '\n')
+
+    '''5. DEFINE THE END TIME'''
     end = time.time()
     print(f'The waveform took {end-start} seconds to generate')
-
-    '''5. SAVE THE DATA'''
-    filepath = f'{cwd}/data/{time.strftime("%Y-%m-%d %H-%M-%S")} {wf.label} waveform.txt'
-    with open(filepath, 'w') as file:
-        for ix, iy, iz in wf.output():
-            file.write(str(ix) + ',' + str(iy) + ',' + str(iz) + '\n')
