@@ -217,7 +217,10 @@ class Operations:
             self.i = np.append(self.i, self.averaged)       # and appends the result to the current array
         
         self.index = self.shape.index       # indexing array borrowed from waveforms.py (zipping with E and i cuts this automatically)
-        self.E = np.append(self.E[self.peaks.astype(int)[ : 2 * self.shape.ns * self.shape.steps]], self.E[-1])     # uses the index of the peaks to work out the potential corresponding to each step, other methods caused some distortion in the plotted data
+        for ix in range(0, self.peaks.size):
+            if self.peaks[ix] > self.E.size:
+                self.E = self.E[self.peaks.astype(int)[ : ix]]     # uses the index of the peaks to work out the potential corresponding to each step, other methods caused some distortion in the plotted data
+                break
         self.i = self.i[:self.E.size]       # current array cut to the length of the potential waveform if necessary
         
     
