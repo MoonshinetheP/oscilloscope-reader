@@ -97,10 +97,10 @@ class Operations:
         if self.step <= 0:       # checks that the given moving average step is greater than 0
             print('\n' + 'Moving average step must be greater than 0.' + '\n')
             sys.exit() 
-        if self.center - (self.range / 2) < 0.01:       # checks that the sampling window avoids the very beginning of an interval
+        if round(self.center - (self.range / 2), 3) < 0.01:       # checks that the sampling window avoids the very beginning of an interval
             print('\n' + 'Sampling cannot be done in the first 1 percent of an interval.' + '\n')
             sys.exit() 
-        if self.center + (self.range / 2) > 0.99:       # checks that the sampling window avoids the very end of an interval
+        if round(self.center + (self.range / 2), 3) > 0.99:       # checks that the sampling window avoids the very end of an interval
             print('\n' + 'Sampling cannot be done in the last 1 percent of an interval.' + '\n')
             sys.exit() 
 
@@ -211,8 +211,8 @@ class Operations:
                 self.interval = self.data.i[int(self.peaks[ix]): int(self.peaks[ix + 1])]       # isolates the interval using the peak positions found earlier
             except:     #for the last step
                 self.interval = self.data.i[int(self.peaks[ix]):int(self.peaks[ix] + self.shape.interval)]      # isolates the interval using the peak positions found earlier and estimates the end position of the last interval
-            self.urange = (self.center + (self.range / 2)) * self.interval.size     # finds the index for the upper limit of the sampling region
-            self.lrange = (self.center - (self.range / 2)) * self.interval.size     # finds the index for the lower limit of the sampling region
+            self.urange = round((self.center + (self.range / 2)), 3) * self.interval.size     # finds the index for the upper limit of the sampling region
+            self.lrange = round((self.center - (self.range / 2)), 3) * self.interval.size     # finds the index for the lower limit of the sampling region
             self.averaged = np.average(self.interval[int(self.lrange) : int(self.urange)])      # averages the current within the sampling region
             self.i = np.append(self.i, self.averaged)       # and appends the result to the current array
         
