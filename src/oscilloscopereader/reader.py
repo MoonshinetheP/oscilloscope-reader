@@ -52,6 +52,7 @@ How to use this file:
        c) Small steps can result in longer analysis times, but better resolution
        d) If the window is set larger than the number of data points per interval, it can cause 
           distortion, whilst lower window values will leave some transient features
+       e) In current sampling, the sampling window cannot be in the first or last 1% of an interval
     7. Scroll down to the sixth point and choose whether you want to display and/or save plots of 
        the analysed data
     8. Run the python file
@@ -115,7 +116,7 @@ data = fo.Oscilloscope(filedialog.askopenfilename(), cf = 0.000012)
 #data = sim.Capacitance(shape, Cd = 0.000050, Ru = 250)
 
 '''5. PERFORM ANALYSIS ON THE DATA FILE'''
-analysis = op.Operations(shape, data, MA = False, window = 50000, step = 1000, CS = True, alpha = 0.9)
+analysis = op.Operations(shape, data, MA = False, window = 50000, step = 1000, CS = True, center = 0.3, range = 0.1)
 
 '''6. VISUALISE THE ANALYSIS'''
 plt.Plotter(shape, analysis, display = True, save = True)
