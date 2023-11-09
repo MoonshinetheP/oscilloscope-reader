@@ -40,6 +40,7 @@ This file has no standalone operational capabilities.
 
 import sys
 import pandas as pd
+import numpy as np
 
 
 class Oscilloscope:
@@ -65,14 +66,19 @@ class Oscilloscope:
             sys.exit()
         
         '''DATA VALUE ERRORS'''
-        if self.cf <= 0:        # checks that the conversion factor is a positive non-zero value
+        if self.cf == 0:        # checks that the conversion factor is a positive non-zero value
             print('\n' + 'Conversion factor must be a postive non-zero value.' + '\n')
             sys.exit()
 
         '''OSCILLOSCOPE FILE IMPORT'''
         try:
-            df = pd.read_csv(self.file, header = 1, low_memory = False)     # opens the .csv oscilloscope file into a pandas dataframe without the header and with full detail
-            self.i = df.to_numpy().astype(float)[:,1]       # converts the pandas dataframe to a numpy filled with float values
+            df = pd.read_csv(self.file, skiprows = 1, low_memory = False)     # opens the .csv oscilloscope file into a pandas dataframe without the header and with full detail
+            array = df.to_numpy().astype(float)
+            for ix in range(0, array.shape[1]):
+                if array[0][ix] == 0.0 or np.isnan(array[0][ix]) == True:
+                    pass
+                else:
+                    self.i = array[:,ix]       # converts the pandas dataframe to a numpy filled with float values
             self.i *= -self.cf      # modifies the array using the conversion factor
         except:
             raise       # raises an error if the .csv file was not readable for any reason
