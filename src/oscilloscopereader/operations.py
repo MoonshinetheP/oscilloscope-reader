@@ -151,17 +151,16 @@ class Operations:
 
         '''FINDING VERTEX POTENTIALS'''
         if self.data.label == 'imported':       # all imported data also requires that you find a vertex potential in order to plot vs. the imported potential waveform
-            iz = 0      # counter for checking the change in current between two adjacent peaks
             self.changes = np.diff(self.values)     # finds the change in current between two adjacent peaks
-            for iz in self.changes:     # loops through the changes
-                if iz >= np.abs(self.values[1]):        # checks if the change between two adjacent peaks is more positive than the height of a single peak
+            for iw,iz in enumerate(self.changes):     # loops through the changes
+                if iz >= np.abs(self.values[iw]):        # checks if the change between two adjacent peaks is more positive than the height of a single peak
                     self.lv = int(self.peaks[np.where(self.changes == iz)[0][0]])       # assigns the position of this change to the lower vertex potential
                     if self.shape.dE > 0:       # activates when step size is positive
                             self.E = np.concatenate((self.shape.E[self.shape.udp + self.shape.dp - self.lv: ], self.shape.E[:self.shape.udp + self.shape.dp -self.lv]))     # and reorganises the imported potential waveform to fit the data 
                     elif self.shape.dE <0:      # activates when step size is negative
                             self.E = np.concatenate((self.shape.E[self.shape.ldp - self.lv: ], self.shape.E[:self.shape.ldp - self.lv]))        # and reorganises the imported potential waveform to fit the data 
                     break       # breaks the loop,because the other vertex potential is not needed
-                if iz <= -np.abs(self.values[1]):         # checks if the change between two adjacent peaks is more negative than the negative height of a single peak
+                if iz <= -np.abs(self.values[iw]):         # checks if the change between two adjacent peaks is more negative than the negative height of a single peak
                     self.uv = int(self.peaks[np.where(self.changes == iz)[0][0]])       # assigns the position of this change to the upper vertex potential
                     if self.shape.dE > 0:       # activates when step size is positive
                             self.E = np.concatenate((self.shape.E[self.shape.udp - self.uv: ], self.shape.E[:self.shape.udp - self.uv]))        # and reorganises the imported potential waveform to fit the data 
