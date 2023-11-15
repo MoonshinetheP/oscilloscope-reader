@@ -169,11 +169,11 @@ class Waveform:
         self.interval = round(np.abs(self.dE / self.sr) * self.osf)     # number of sampling points between steps (Sa)
 
         self.window = round(self.Eupp - self.Elow, 3)       # potential window (in V) rounded to 3 d.p
-        self.dp = round(self.window * self.osf / self.sr)       # number of data points per potential window (in Sa) rounded to 0 d.p
+        self.dp = round(self.window * round(self.osf / self.sr))       # number of data points per potential window (in Sa) rounded to 0 d.p
         self.uwindow = round(self.Eupp - self.Eini, 3)      # upper partial potential window (in V) rounded to 3 d.p
-        self.udp = round(self.uwindow * self.osf / self.sr)       # number of data points per upper partial potential window (in Sa) rounded to 0 d.p
+        self.udp = round(self.uwindow * round(self.osf / self.sr))       # number of data points per upper partial potential window (in Sa) rounded to 0 d.p
         self.lwindow = round(self.Eini - self.Elow, 3)      # lower partial potential window (in V) rounded to 3 d.p
-        self.ldp = round(self.lwindow * self.osf / self.sr)       # number of data points per lower partial potential window (in Sa) rounded to 0 d.p
+        self.ldp = round(self.lwindow * round(self.osf / self.sr))       # number of data points per lower partial potential window (in Sa) rounded to 0 d.p
         
         self.tmax = round(2 * self.ns * self.window / self.sr, 6)       # end time for potential waveform (in s) rounded to 6 d.p
         self.dt = round((1 / self.osf), 9)      # interval time between data points (in s) rounded to 9 d.p
