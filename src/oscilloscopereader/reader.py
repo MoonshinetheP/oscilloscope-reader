@@ -108,15 +108,16 @@ except OSError as exc:
 start = time.time()  
 
 '''3. DESCRIBE THE WAVEFORM THAT WAS USED IN THE EXPERIMENT OR IS TO BE USED IN THE SIMULATION'''
-#shape = wf.CyclicLinearVoltammetry(Eini = 0, Eupp = 0.5, Elow = -0.5, dE = 0.001, sr = 0.5, ns = 1, osf = None)
-shape = wf.CyclicStaircaseVoltammetry(Eini = 0, Eupp = 0.5, Elow = -0.5, dE = 0.001, sr = 0.5, ns = 1, osf = None)
+shape = wf.CyclicLinearVoltammetry(Eini = -0.3, Eupp = 0.85, Elow = -0.65, dE = 0.002, sr = 0.5, ns = 1, osf = 2000000)
+#shape = wf.CyclicStaircaseVoltammetry(Eini = -0.3, Eupp = 0.85, Elow = -0.65, dE = 0.002, sr = 0.5, ns = 1, osf = 2000000)
 
 '''4. EITHER OPEN A REAL DATA FILE OR A SIMULATED DATA FILE'''
-data = fo.Oscilloscope(filedialog.askopenfilename(), cf = 0.000012)
+data = fo.Oscilloscope(filedialog.askopenfilename(), cf = 0.0001)
+
 #data = sim.Capacitance(shape, Cd = 0.000050, Ru = 250)
 
 '''5. PERFORM ANALYSIS ON THE DATA FILE'''
-analysis = op.Operations(shape, data, MA = False, window = 50000, step = 1000, CS = False, center = 0.5, range = 0.99)
+analysis = op.Operations(shape, data, MA = False, window = 100000, step = 1000, CS = False, center = 0.5, range = 0.98)
 
 '''6. VISUALISE THE ANALYSIS'''
 plt.Plotter(shape, analysis, display = True, save = True)
