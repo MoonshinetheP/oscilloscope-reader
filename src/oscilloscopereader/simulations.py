@@ -290,11 +290,11 @@ if __name__ == '__main__':
     start = time.time()  
 
     '''3. DESCRIBE THE WAVEFORM'''
-    #shape = wf.CyclicLinearVoltammetry(Eini = 0, Eupp = 0.5, Elow = -0.50, dE = 0.002, sr = 0.5, ns = 1, osf = 2000000)
-    shape = wf.CyclicStaircaseVoltammetry(Eini = 0, Eupp = 0.5, Elow = -0.5, dE = 0.002, sr = 0.5, ns = 1, osf = 2000000)
+    shape = wf.CyclicLinearVoltammetry(Eini = 0, Eupp = 0.5, Elow = -0.50, dE = 0.001, sr = 1.0, ns = 1, osf = None)
+    #shape = wf.CyclicStaircaseVoltammetry(Eini = 0, Eupp = 0.5, Elow = -0.5, dE = 0.002, sr = 0.5, ns = 1, osf = 2000000)
     
     '''4. DESCRIBE THE SIMULATION CONDITIONS'''
-    data = Capacitance(shape, Cd = 0.000050, Ru = 250)
+    data = Capacitance(shape, Cd = 0.0040, Ru = 500)
 
     '''5. SAVE THE DATA'''
     filepath = f'{cwd}/data/{time.strftime("%Y-%m-%d %H-%M-%S")} {data.label} {shape.label} data.txt'
